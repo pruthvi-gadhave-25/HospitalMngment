@@ -1,6 +1,7 @@
 ﻿using HospitalManagement.Data;
 using HospitalManagement.Models;
 using HospitalManagement.Repository.Interface;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
 namespace HospitalManagement.Repository
@@ -17,7 +18,6 @@ namespace HospitalManagement.Repository
 
         public async Task<Department?> AddDepartmentAsync(Department department)
         {
-
             try
             {
                 if(department == null)
@@ -36,10 +36,7 @@ namespace HospitalManagement.Repository
             }
         }
 
-        public Task DeleteDepartmentAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
+        
 
         public async  Task<List<Department>> GetAllDepartmentsAsync()
         {
@@ -57,14 +54,59 @@ namespace HospitalManagement.Repository
             }
         }
 
-        public Task<Department> GetDepartmentByIdAsync(int id)
+    
+
+        public async Task<bool> UpdateDepartmentAsync(Department department)
         {
-            throw new NotImplementedException();
+            try
+            {
+                _context.Departments.Update(department);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"exception occurs {e.Message}");
+
+                return false;
+            }
         }
 
-        public Task UpdateDepartmentAsync(Department department)
+        public async Task<bool> DeleteDepartmentAsync(int id)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var department = await _context.Departments.FirstOrDefaultAsync(p => p.Id == id);
+
+                if (department == null)
+                {
+                    return false;
+                }
+                var res = _context.Departments.Remove(department);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return false;
+            }
+        }
+
+        public async Task<Department?> GetDepartmentByIdAsync(int id)
+        {
+            try
+            {
+                var dept  = await _context.Departments.FindAsync(id);
+                if(dept == null)
+                {
+                    return null; 
+                }
+                return dept;
+            }catch(Exception ex)
+            {
+                return null;
+            }
         }
     }
 }

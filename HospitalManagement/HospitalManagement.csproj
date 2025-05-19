@@ -16,4 +16,12 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EditorConfigFiles Remove="C:\Users\jadha\source\repos\HospitalMngment\HospitalManagement\Repository\Interface\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="C:\Users\jadha\source\repos\HospitalMngment\HospitalManagement\Repository\Interface\.editorconfig" />
+  </ItemGroup>
+
 </Project>

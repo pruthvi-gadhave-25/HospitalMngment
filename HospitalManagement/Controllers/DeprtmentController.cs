@@ -17,8 +17,8 @@ namespace HospitalManagement.Controllers
         }
 
 
-        [HttpGet("getDepartments")]
-        public async  Task<IActionResult> GetDeprtments()
+        [HttpGet("get/departments")]
+        public async  Task<IActionResult> GetDepartments()
         {
             try
             {
@@ -40,8 +40,8 @@ namespace HospitalManagement.Controllers
 
 
 
-        [HttpPost("addDepartment")]
-        public async Task<IActionResult> Createdeprtment(Department department)
+        [HttpPost("add/department")]
+        public async Task<IActionResult> CreateDepartment(Department department)
         {
             try
             {
@@ -56,6 +56,76 @@ namespace HospitalManagement.Controllers
             {
                 //log 
                 return StatusCode(500, "Error occured while adding Department"); 
+            }
+        }
+
+        [HttpPut("update/department")]
+        public async Task<IActionResult> UpdateDepartment(Department department)
+        {
+            try
+            {   
+                if(department == null)
+                {
+                    return BadRequest("invalid data");
+                }
+                var res = await _deptService.UpdateDepartmentAsync(department);
+                if(res ==  false ) 
+                { 
+                    return BadRequest("invalid data or Id "); 
+                }
+                return Ok("Updated succefully");
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return BadRequest("not updated ");
+            }
+        }
+
+        [HttpDelete("delete/department/{id}")]
+        public async Task<IActionResult> DeleteDepartmentById(int id)
+        {
+            try
+            {
+                var validDept = await _deptService.GetDepartmentByIdAsync(id);
+                if(validDept == null)
+                {
+                    return BadRequest("Invlaid department");
+                }
+                var res = await _deptService.DeleteDepartmentAsync(id);
+                if (res == false)
+                {
+                    return BadRequest("invalid id ");
+                }
+                return Ok("deleted succefully");
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine( ex.Message);
+                return BadRequest("invalid id ");
+            }
+        }
+
+
+        [HttpGet("get/deparment/{id}")]
+        public async Task<IActionResult> getDepartmentByIdAsync(int id)
+        {
+            try
+            {
+                var res = await _deptService.GetDepartmentByIdAsync(id);
+
+                if(res == null)
+                {
+                    return NotFound("Not found");
+                }
+                return Ok(res);
+                
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return BadRequest("id is invalid");
             }
         }
     }

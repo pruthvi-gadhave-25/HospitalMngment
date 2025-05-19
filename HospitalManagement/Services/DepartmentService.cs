@@ -8,7 +8,6 @@ namespace HospitalManagement.Services
     {   
         private readonly IDepartmentRepository _departmentRepo;
 
-
         public DepartmentService(IDepartmentRepository departmentRepository)
         {
             _departmentRepo = departmentRepository;
@@ -29,10 +28,7 @@ namespace HospitalManagement.Services
            
         }
 
-        public async  Task DeleteDepartmentAsync(Department department)
-        {
-            throw new NotImplementedException();
-        }
+
 
         public  async Task<List<Department>> GetDepartmentAsync()
         {
@@ -47,14 +43,49 @@ namespace HospitalManagement.Services
             }
         }
 
-        public async  Task<Department> GetDepartmentByIdAsync(int id)
+        public async  Task<Department?> GetDepartmentByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            try
+            {
+                return await _departmentRepo.GetDepartmentByIdAsync(id);
+            }
+            catch(Exception ex)
+            {   
+                return null;
+            }
         }
 
-        public async Task<Department> UpdateDepartmentAsync(Department department)
+        public async Task<bool> UpdateDepartmentAsync(Department department)
         {
-            throw new NotImplementedException();
+            try
+            {
+                Department exisitngDept =await  _departmentRepo.GetDepartmentByIdAsync(department.Id);
+                if(exisitngDept == null)
+                {
+                    return false;
+                }
+                return await _departmentRepo.UpdateDepartmentAsync(exisitngDept);
+            }         
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return false;
+            }
+        }
+        public async Task<bool> DeleteDepartmentAsync(int id)
+        {
+            try
+            {
+                var isIdExists = _departmentRepo.GetDepartmentByIdAsync(id);
+                if (isIdExists == null)
+                {
+                    return false;
+                }
+                return await _departmentRepo.DeleteDepartmentAsync(id);
+            }catch(Exception ex)
+            {
+                return false;
+            }
         }
     }
 }

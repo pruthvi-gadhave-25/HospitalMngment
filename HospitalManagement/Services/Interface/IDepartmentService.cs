@@ -5,9 +5,9 @@ namespace HospitalManagement.Services.Interface
     public interface IDepartmentService
     {
         Task<List<Department>> GetDepartmentAsync();
-        Task<Department> UpdateDepartmentAsync(Department department);
-        Task DeleteDepartmentAsync(Department department);
-        Task<Department> GetDepartmentByIdAsync(int id);
+        Task<bool> UpdateDepartmentAsync(Department department);
+        Task<bool> DeleteDepartmentAsync(int id);
+        Task<Department?> GetDepartmentByIdAsync(int id);
         Task<Department?> AddDepartmentAsync(Department deprtment);
     }
 }
