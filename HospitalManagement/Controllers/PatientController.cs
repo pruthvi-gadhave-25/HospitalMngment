@@ -1,4 +1,5 @@
-﻿using HospitalManagement.Models;
+﻿using HospitalManagement.DTO;
+using HospitalManagement.Models;
 using HospitalManagement.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -60,11 +61,11 @@ namespace HospitalManagement.Controllers
         }
 
         [HttpPost("add/patient")]
-        public async Task<IActionResult> CreateDepartment(Patient patient)
+        public async Task<IActionResult> CreatePatientAsync(PatientAddDto patientDto)
         {
             try
             {
-                var res = await _patientService.AddPatientAsync(patient);
+                var res = await _patientService.AddPatientAsync(patientDto);
                 if (res == false)
                 {
                     return NotFound("invalid data");
@@ -76,6 +77,13 @@ namespace HospitalManagement.Controllers
                 //log 
                 return StatusCode(500, "Error occured while adding Patient");
             }
+        }
+
+        [HttpGet("search/patient")]
+        public async Task<IActionResult> SearchPatients(string name,  string? email = null, string? mobile =null)
+        {
+            var result = await _patientService.SearchPatientsAsync(name, email, mobile);
+            return Ok(result);
         }
     }
 }

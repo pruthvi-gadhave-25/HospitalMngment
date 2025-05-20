@@ -2,6 +2,7 @@
 using HospitalManagement.Models;
 using HospitalManagement.Repository.Interface;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace HospitalManagement.Repository
 {
@@ -54,6 +55,31 @@ namespace HospitalManagement.Repository
             {
                 Console.WriteLine(ex.Message);
                 return new List<Patient>();
+            }
+        }
+
+        public async Task<List<Patient>> SearchPatientAsync(string name , string mobileNo , string email)
+        {
+            try{
+                var query = _context.Patients.AsQueryable();
+            
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                     query = query.Where(c => c.Name.Contains(name));
+                }
+                 if (!string.IsNullOrWhiteSpace(mobileNo))
+                {
+                    query = query.Where(c => c.Mobile.Contains(mobileNo));
+                }
+                if(!string.IsNullOrWhiteSpace(email))
+                {
+                    query = query.Where(c => c.Email.Contains(email));
+                }
+
+                return await query.ToListAsync();
+            }catch(Exception ex)
+            {
+                return null ;
             }
         }
     }

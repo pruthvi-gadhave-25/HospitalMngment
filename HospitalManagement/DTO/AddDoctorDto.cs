@@ -1,12 +1,9 @@
-﻿using HospitalManagement.Models.Helpers;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace HospitalManagement.Models
+namespace HospitalManagement.DTO
 {
-    public class Doctor
+    public class AddDoctorDto
     {
-        public int Id { get; set; }
-
         [Required(ErrorMessage = "Doctor name is required.")]
         public string Name { get; set; }
 
@@ -21,13 +18,5 @@ namespace HospitalManagement.Models
 
         [Required(ErrorMessage = "Department ID is required.")]
         public int DepartmentId { get; set; }
-    
-        public Department? Department { get; set; } //foreign
-
-
-        public ICollection<Appointment>? Appointments { get; set; }
-        public ICollection<AvailabilitySlot>? AvailabilitySlots { get; set; }
-
-
     }
 }

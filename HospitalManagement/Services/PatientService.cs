@@ -1,4 +1,5 @@
-﻿using HospitalManagement.Models;
+﻿using HospitalManagement.DTO;
+using HospitalManagement.Models;
 using HospitalManagement.Repository.Interface;
 using HospitalManagement.Services.Interface;
 
@@ -12,14 +13,24 @@ namespace HospitalManagement.Services
         {
             _patientRepository = patientRepo;
         }
-        public async Task<bool> AddPatientAsync(Patient patient)
+        public async Task<bool> AddPatientAsync(PatientAddDto patientDto)
         {
             try
             {
-               if(patient == null)
+               if(patientDto == null)
                 {
                     return false;
                 }
+
+                var patient = new Patient
+
+                { 
+                    Name = patientDto.Name,
+                    Email = patientDto.Email,
+                    Mobile = patientDto.Mobile,
+                    Gender = patientDto.Gender,
+                    Dob = patientDto.Dob
+                };
                 var res = await _patientRepository.AddPatientAsync(patient);
                 return res;
 
@@ -58,6 +69,16 @@ namespace HospitalManagement.Services
             catch (Exception ex)
             {
                 return  null;
+            }
+        }
+
+        public Task<List<Patient>> SearchPatientsAsync(string name, string? email, string? mobile)
+        {
+            try{
+                return _patientRepository.SearchPatientAsync(name, email, mobile);
+            }catch(Exception ex)
+            {
+                return null;
             }
         }
     }
