@@ -1,5 +1,6 @@
 ﻿using HospitalManagement.DTO;
 using HospitalManagement.DTO.AvailabiltyDto;
+using HospitalManagement.Migrations;
 using HospitalManagement.Models;
 using HospitalManagement.Models.Helpers;
 using HospitalManagement.Repository.Interface;
@@ -68,19 +69,31 @@ namespace HospitalManagement.Services
             }
         }
 
-        public async Task<List<Doctor>> GetDoctorsAsync()
+        public async Task<List<GetDoctorDto>> GetDoctorsAsync()
         {
             try
             {
-                var res = await _repository.GetAllDocotorsAsync();
+                var doctors  = await _repository.GetAllDocotorsAsync();
 
-                //var docotorList =  
-                return res;
+                var doctorDtos = doctors.Select(d => new GetDoctorDto
+                {
+                    Name = d.Name,
+                    Specialization = d.Specialization,
+                    ContactDetails = d.ContactDetails,
+                    DepartmentName = d.Department?.Name ?? "N/A",
+                    AvailabilitySlots = d.AvailabilitySlots?.Select(slot => new GetAvailabilitySlotDto
+                    {
+                        DayofWeek = slot.DayofWeek,
+                        EndTime = slot.EndTime,
+                        StartTime = slot.StartTime,
+                    }).ToList() ?? new()
+                }).ToList();
+                return doctorDtos;
             }
             catch (Exception ex)
             {
                 //logger exception
-                return new List<Doctor>();
+                return new List<GetDoctorDto>();
             }
         }
 
@@ -99,9 +112,16 @@ namespace HospitalManagement.Services
                 {
                     Name = res.Name,
                     Specialization= res.Specialization,
-                    AvailabilitySlot =res.AvailabilitySlot,
                     ContactDetails= res.ContactDetails,
-                    DepartmentName = dept.Name 
+                    DepartmentName = dept.Name ,
+                    
+                    AvailabilitySlots = res.AvailabilitySlots?.Select(slot => new GetAvailabilitySlotDto
+                    {
+                        DayofWeek = slot.DayofWeek,
+                        EndTime = slot.EndTime,
+                        StartTime = slot.StartTime,
+                    }).ToList() ?? new()
+                    
                 };
                 return doctor;
             }

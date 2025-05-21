@@ -64,7 +64,10 @@ namespace HospitalManagement.Repository
         {
             try
             {
-                var doctors = await _context.Doctors.ToListAsync();
+                var doctors = await _context.Doctors.
+                     Include(d => d.Department)
+                    .Include(a => a.AvailabilitySlots)
+                    .ToListAsync();
 
                 return doctors ?? new List<Doctor>();
             }
@@ -82,7 +85,10 @@ namespace HospitalManagement.Repository
         {
             try
             {
-                var doctor = await _context.Doctors.FindAsync(id);
+                var doctor = await _context.Doctors.
+                    Include(d => d.Department)
+                    .Include( a => a.AvailabilitySlots)
+                    .FirstOrDefaultAsync( d  => d.Id == id);
                 if (doctor == null)
                 {
                     return null;
@@ -116,6 +122,7 @@ namespace HospitalManagement.Repository
             try
             {
                 await _context.AvailabilitySlots.AddAsync(slot);
+                await _context.SaveChangesAsync();
                 return true;
             }catch (Exception ex)
             {

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using HospitalManagement.DTO.AvailabiltyDto;
+using System.ComponentModel.DataAnnotations;
 
 namespace HospitalManagement.DTO
 {
@@ -9,10 +10,11 @@ namespace HospitalManagement.DTO
 
         public string Specialization { get; set; }
 
-        public string AvailabilitySlot { get; set; }
-
         public string ContactDetails { get; set; }
 
         public string DepartmentName { get; set; }
+
+
+        public List<GetAvailabilitySlotDto> AvailabilitySlots { get; set; } = new();
     }
 }

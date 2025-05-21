@@ -31,7 +31,9 @@ namespace HospitalManagement.Repository
         {
             try
             {
-                var res=  await _context.Patients.FindAsync(id);
+                var res=  await _context.Patients
+                    .Include( a=> a.Appointments)
+                    .FirstOrDefaultAsync( p => p.Id ==  id );
                 if(res == null)
                 {
                     return null;
@@ -48,7 +50,9 @@ namespace HospitalManagement.Repository
         {
             try
             {
-                var res =  await _context.Patients.ToListAsync();
+                var res =  await _context.Patients
+                    .Include ( a=> a.Appointments)
+                    .ToListAsync();
                 return res;
             }
             catch(Exception ex)

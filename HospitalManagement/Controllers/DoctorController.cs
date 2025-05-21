@@ -82,7 +82,7 @@ namespace HospitalManagement.Controllers
             }
         }
 
-        [HttpDelete("delete/department/{id}")]
+        [HttpDelete("delete/doctor/{id}")]
         public async Task<IActionResult> DeleteDepartmentById(int id)
         {
             try
@@ -108,7 +108,7 @@ namespace HospitalManagement.Controllers
         }
 
 
-
+         
         [HttpGet("get/doctor/{id}")]
         public async Task<IActionResult> GetDoctorByIdAsync(int id)
         {
@@ -130,7 +130,7 @@ namespace HospitalManagement.Controllers
             }
         }
 
-        [HttpGet("doctor/{doctorId}/availability")]
+        [HttpGet("avalibalitySlots/{doctorId}")]
         public async Task<IActionResult> GetAvailabilityByDoctorId(int doctorId)
         {
             try
@@ -151,7 +151,7 @@ namespace HospitalManagement.Controllers
 
 
         [HttpPost("availability/slot")]
-        public async Task<IActionResult> AddAvailabilitySlot([FromBody] CreateAvailabilitySlotDto dto)
+        public async Task<IActionResult> AddAvailabilitySlot( CreateAvailabilitySlotDto dto)
         {
             try
             {

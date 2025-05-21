@@ -40,7 +40,7 @@ namespace HospitalManagement.Services
             }
         }
 
-        public async Task<Patient> GetPatientByIdAsync(int id)
+        public async Task<GetPatientDto> GetPatientByIdAsync(int id)
         {
             try
             {
@@ -49,7 +49,24 @@ namespace HospitalManagement.Services
                     return null;
                 }
                 var res = await _patientRepository.GetPatientByIdAsync(id);
-                return res;
+
+                var patient = new GetPatientDto
+                {
+                    Name = res.Name,
+                    Email = res.Email,
+                    Mobile = res.Mobile,
+                    Gender = res.Gender,
+                    Dob = res.Dob,
+                    Appointments = res.Appointments?.Select(p => new GetAppointmentsDto
+                    {
+                        Diagnoasis = p.Diagnoasis,
+                        Treatement = p.Treatement,
+                        Medications = p.Medications,
+                        DepartmentName = p.Doctor?.Department?.Name ?? "N/A",
+                        DoctorName = p.Doctor.Name
+                    }).ToList(),
+                };
+                return patient;
 
             }
             catch (Exception ex)
@@ -58,12 +75,32 @@ namespace HospitalManagement.Services
             }
         }
 
-        public async  Task<List<Patient>> GetPatientsAsync()
+        public async  Task<List<GetPatientDto>> GetPatientsAsync()
         {
             try{ 
                            
                 var res = await _patientRepository.GetPatientsAsync();
-                return res;
+                var patients =res.Select( p => new GetPatientDto
+                {
+                    Name = p.Name,
+                    Email = p.Email,
+                    Mobile = p.Mobile,
+                    Gender = p.Gender,
+                    Dob = p.Dob,
+                    
+                    Appointments = p.Appointments?.Select( p => new GetAppointmentsDto
+                    {
+                        Diagnoasis = p.Diagnoasis,
+                        Treatement = p.Treatement,
+                        Medications = p.Medications,
+                        AppointmentDate = p.AppointmentDate,
+                        AppointmentTime = p.AppointmentTime,
+                        DoctorName = p.Doctor?.Name ?? "N/a",
+                        DepartmentName = p.Doctor?.Department?.Name ?? "N/a"
+
+                    }).ToList() ?? new(),
+                }).ToList();
+                return patients;
 
             }
             catch (Exception ex)

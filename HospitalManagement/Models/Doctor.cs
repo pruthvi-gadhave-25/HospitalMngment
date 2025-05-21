@@ -22,7 +22,7 @@ namespace HospitalManagement.Models
         [Required(ErrorMessage = "Department ID is required.")]
         public int DepartmentId { get; set; }
     
-        public Department? Department { get; set; } //foreign
+        public virtual  Department? Department { get; set; } //foreign
 
 
         public ICollection<Appointment>? Appointments { get; set; }
