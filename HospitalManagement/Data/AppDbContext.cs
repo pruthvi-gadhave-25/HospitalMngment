@@ -20,5 +20,9 @@ namespace HospitalManagement.Data
 
         public DbSet<Specialization>Specializations { get; set; }
         public DbSet<AvailabilitySlot> AvailabilitySlots { get; set; }
+
+
+        public DbSet<User> Users { get; set; }
+        public DbSet<Role>Roles { get; set; }
     }
 }

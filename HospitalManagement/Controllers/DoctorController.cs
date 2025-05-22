@@ -2,6 +2,7 @@
 using HospitalManagement.DTO.AvailabiltyDto;
 using HospitalManagement.Models;
 using HospitalManagement.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,6 +19,8 @@ namespace HospitalManagement.Controllers
             _service = service;
         }
 
+
+        [Authorize (Roles ="Doctor")]
         [HttpGet("get/doctors")]
         public async Task<IActionResult> GetDoctors()
         {
@@ -108,7 +111,7 @@ namespace HospitalManagement.Controllers
         }
 
 
-         
+        
         [HttpGet("get/doctor/{id}")]
         public async Task<IActionResult> GetDoctorByIdAsync(int id)
         {
