@@ -1,5 +1,6 @@
 ﻿using HospitalManagement.DTO.AvailabiltyDto;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace HospitalManagement.DTO
 {
@@ -13,8 +14,7 @@ namespace HospitalManagement.DTO
         public string ContactDetails { get; set; }
 
         public string DepartmentName { get; set; }
-
-
+        
         public List<GetAvailabilitySlotDto> AvailabilitySlots { get; set; } = new();
     }
 }

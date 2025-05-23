@@ -1,5 +1,6 @@
 ﻿using HospitalManagement.DTO;
 using HospitalManagement.DTO.AvailabiltyDto;
+using HospitalManagement.Helpers;
 using HospitalManagement.Models;
 using HospitalManagement.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -20,7 +21,7 @@ namespace HospitalManagement.Controllers
         }
 
 
-        [Authorize (Roles ="Doctor")]
+        //[Authorize (Roles ="Doctor")]
         [HttpGet("get/doctors")]
         public async Task<IActionResult> GetDoctors()
         {
@@ -45,69 +46,45 @@ namespace HospitalManagement.Controllers
 
         [HttpPost("add/doctor")]
         public async Task<IActionResult> CreateDocotr(AddDoctorDto doctorDto)
-        {
-            try
-            {
+        {          
                 var res = await _service.AddDoctorAsync(doctorDto);
-                if (res == null)
-                {
-                    return NotFound("invalid data");
-                }
-                return Ok("Added Successfully");
-            }
-            catch (Exception ex)
-            {
-                //log 
-                return StatusCode(500, "Error occured while adding Doctor");
-            }
+            if (res == null)
+                return ApiResponseHelper.CreatFailure(res.Message, 400);
+
+            return ApiResponseHelper.CreateSuccess(res.Data, res.Message);                                    
         }
 
         [HttpPut("update/doctor")]
         public async Task<IActionResult> UpdateDoctor(UpdateDoctorDto doctorDto)
-        {
-            try
-            {
+        {           
                 if (doctorDto == null)
                 {
-                    return BadRequest("invalid data");
+                    return ApiResponseHelper.CreatFailure("inalvid doctor ", 400);
                 }
                 var res = await _service.UpdateDoctorAsync(doctorDto);
-                if (res == false)
+                if (!res.IsSuccess )
                 {
-                    return BadRequest("invalid data or Id ");
+                    return ApiResponseHelper.CreatFailure("invalid data or Id ", 400);
                 }
-                return Ok("Updated succefully");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return BadRequest("not updated ");
-            }
+                return ApiResponseHelper.CreateSuccess(res.Data ,res.Message);
+                   
         }
 
         [HttpDelete("delete/doctor/{id}")]
         public async Task<IActionResult> DeleteDepartmentById(int id)
         {
-            try
-            {
                 var validDoct = await _service.GetDoctorByIdAsync(id);
                 if (validDoct == null)
                 {
-                    return BadRequest("Invlaid docotr");
+                    return ApiResponseHelper.CreatFailure("invlaid doctor id ", 400);
                 }
                 var res = await _service.DeleteDoctorAsync(id);
-                if (res == false)
+                if (res.IsSuccess == false)
                 {
-                    return BadRequest("invalid id ");
+                    return ApiResponseHelper.CreatFailure("invalid id", 400);
                 }
-                return Ok("deleted succefully");
+                return ApiResponseHelper.CreateSuccess(res.Data, res.Message);
 
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return BadRequest("invalid id ");
-            }
         }
 
 
@@ -115,55 +92,45 @@ namespace HospitalManagement.Controllers
         [HttpGet("get/doctor/{id}")]
         public async Task<IActionResult> GetDoctorByIdAsync(int id)
         {
-            try
-            {
                 var res = await _service.GetDoctorByIdAsync(id);
 
-                if (res == null)
+                if (res.Data == null)
                 {
-                    return NotFound("Not found");
+                    return ApiResponseHelper.CreatFailure(res.Message, 400);
                 }
-                return Ok(res);
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return BadRequest("id is invalid");
-            }
+                return  ApiResponseHelper.CreateSuccess(res.Data, res.Message);  
+            
         }
 
         [HttpGet("avalibalitySlots/{doctorId}")]
         public async Task<IActionResult> GetAvailabilityByDoctorId(int doctorId)
         {
-            try
-            {
                 var slots = await _service.GetBySlotDoctorIdAsync(doctorId);
-
-                if (slots == null || !slots.Any())
-                    return NotFound($"No availability slots found for doctor with ID {doctorId}.");
-
-                return Ok(slots);
-            }
-            catch (Exception ex)
+                
+            if(slots.Data.Count == 0)
             {
-                Console.WriteLine(ex.Message);
-                return StatusCode(500, "An error occurred while fetching availability slots.");
+                return ApiResponseHelper.CreateSuccess(slots.Data, slots.Message); 
             }
+            if (slots == null || !slots.Data.Any())
+            return ApiResponseHelper.CreatFailure(slots.Message, 400);
+
+
+            return ApiResponseHelper.CreateSuccess(slots.Data, slots.Message); ;
+            
         }
 
 
-        [HttpPost("availability/slot")]
+        [HttpPost("availability/slot/add")]
         public async Task<IActionResult> AddAvailabilitySlot( CreateAvailabilitySlotDto dto)
         {
             try
             {
                 var result = await _service.CreateAvaialbiltySlotAsync(dto);
 
-                if (!result)
-                    return BadRequest("Could not add availability slot. It might be overlapping or invalid.");
+                if (!result.IsSuccess)
+                    return ApiResponseHelper.CreatFailure(result.Message, 400);
 
-                return Ok("Availability slot added successfully.");
+                return  ApiResponseHelper.CreateSuccess(result.Data, result.Message); ;
             }
             catch (Exception ex)
             {

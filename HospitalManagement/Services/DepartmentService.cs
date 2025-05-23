@@ -1,4 +1,6 @@
-﻿using HospitalManagement.Models;
+﻿using Azure;
+using HospitalManagement.Helpers;
+using HospitalManagement.Models;
 using HospitalManagement.Repository.Interface;
 using HospitalManagement.Services.Interface;
 
@@ -12,80 +14,57 @@ namespace HospitalManagement.Services
         {
             _departmentRepo = departmentRepository;
         }
-        public async  Task<Department?> AddDepartmentAsync(Department deprtment)
-        {
-            try
-            {       if (deprtment == null)
-                    return null;
-
-                    return  await _departmentRepo.AddDepartmentAsync(deprtment);
-               
-            }catch(Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return null;
-            }
-           
-        }
-
-
-
-        public  async Task<List<Department>> GetDepartmentAsync()
-        {
-            try
-            {
-                var res =  await _departmentRepo.GetAllDepartmentsAsync();
-                return res ;
-            } catch (Exception ex)
-            {   
-                //logger exception
-                return new List<Department>() ;
-            }
-        }
-
-        public async  Task<Department?> GetDepartmentByIdAsync(int id)
-        {
-            try
-            {
-                return await _departmentRepo.GetDepartmentByIdAsync(id);
-            }
-            catch(Exception ex)
-            {   
-                return null;
-            }
-        }
-
-        public async Task<bool> UpdateDepartmentAsync(Department department)
-        {
-            try
-            {
-                Department exisitngDept =await  _departmentRepo.GetDepartmentByIdAsync(department.Id);
-                if(exisitngDept == null)
+        public async  Task<Result<Department?>> AddDepartmentAsync(Department deprtment)
+        {                                      
+                var res =  await _departmentRepo.AddDepartmentAsync(deprtment);
+                if(res == null)
                 {
-                    return false;
+                    return Result<Department?>.ErrorResult("failed to add department");                    
                 }
-                return await _departmentRepo.UpdateDepartmentAsync(exisitngDept);
-            }         
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return false;
-            }
+            return Result<Department?>.SuccessResult(res, "added suucefully");
         }
-        public async Task<bool> DeleteDepartmentAsync(int id)
+
+
+
+        public  async Task<Result<List<Department>>> GetDepartmentAsync()
         {
-            try
+                            
+            var res = await _departmentRepo.GetAllDepartmentsAsync();
+            if (res == null)
             {
-                var isIdExists = _departmentRepo.GetDepartmentByIdAsync(id);
-                if (isIdExists == null)
-                {
-                    return false;
-                }
-                return await _departmentRepo.DeleteDepartmentAsync(id);
-            }catch(Exception ex)
-            {
-                return false;
+                return Result<List<Department>>.ErrorResult("failed to fetch departments");
             }
+            return Result<List<Department>>.SuccessResult(res, "fetched  suucefully");
+        }
+
+        public async  Task<Result<Department?>> GetDepartmentByIdAsync(int id)
+        {            
+            var res = await _departmentRepo.GetDepartmentByIdAsync(id);
+            if (res == null)
+            {
+                return Result<Department?>.ErrorResult("failed to get department or invalid id");
+            }
+            return Result<Department?>.SuccessResult(res, "fetched succefully");
+        }
+
+        public async Task<Result<bool>> UpdateDepartmentAsync(Department department)
+        {
+               var  dept = await _departmentRepo.GetDepartmentByIdAsync(department.Id);
+            if(dept == null)
+            {
+                return Result<bool>.ErrorResult("department is null  or invalid id ");
+            }
+            return Result<bool>.SuccessResult(true ,"Updated deprtment ");
+        }
+        public async Task<Result<bool>> DeleteDepartmentAsync(int id)
+        {
+                var isdept = _departmentRepo.GetDepartmentByIdAsync(id);
+                if (isdept == null)
+                {
+                    return Result<bool>.ErrorResult("invalid deot id");
+                }
+                var res =  await _departmentRepo.DeleteDepartmentAsync(id);
+            return Result<bool>.SuccessResult(res, "deleted succesfullly");
         }
     }
 }

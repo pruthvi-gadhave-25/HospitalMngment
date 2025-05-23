@@ -1,4 +1,5 @@
 ﻿using HospitalManagement.DTO;
+using HospitalManagement.Helpers;
 using HospitalManagement.Models;
 using HospitalManagement.Repository.Interface;
 using HospitalManagement.Services.Interface;
@@ -21,24 +22,21 @@ namespace HospitalManagement.Services
             _doctorService = doctorService;
         }
 
-        public async  Task<bool> BookAppointment(BookAppointmentDto appointmentDto)
+        public async  Task<Result<bool>> BookAppointment(BookAppointmentDto appointmentDto)
         {
-            try
-            {                
-             
                 var patient =  await _patientService.GetPatientByIdAsync(appointmentDto.PatientID);
                
                 var doctor = await _doctorService.GetDoctorByIdAsync(appointmentDto.DoctorId);
 
-                if ((patient == null) || (doctor == null))
-                    return false;
+            if ((patient == null) || (doctor == null))
+                return Result<bool>.ErrorResult("patient or doctor is invalid");
 
                 var slots = await _doctorService.GetBySlotDoctorIdAsync(appointmentDto.DoctorId);
                 var appointTime = appointmentDto.AppointmentTime;
                 var appointDay = appointmentDto.AppointmentDate.DayOfWeek;
 
 
-                var isSlotAvailable = slots.Any(slot =>
+                var isSlotAvailable = slots.Data.Any(slot =>
                 slot.DayofWeek == appointDay &&
                 slot.StartTime <= appointTime && 
                 appointTime < slot.EndTime
@@ -47,7 +45,7 @@ namespace HospitalManagement.Services
 
                 if (!isSlotAvailable)
                 {
-                    return false;
+                    return  Result<bool>.ErrorResult("slot is not available");
                 }
 
 
@@ -63,112 +61,107 @@ namespace HospitalManagement.Services
                    
                 };
 
-                await _appointmentRepository.BookAppointment(appointment);
-                return true;
-                 
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return false;
-            }
-
+               var res =  await _appointmentRepository.BookAppointment(appointment);
+            return Result < bool>.SuccessResult(res, "appointment booked succfully");            
         }
 
-        public async Task<bool> RescheduleAppointmentAsync(RescheduleAppointmentDto dto)
+        public async Task<Result<bool>> RescheduleAppointmentAsync(RescheduleAppointmentDto dto)
         {
-            try
-            {
-                var appointment = await _appointmentRepository.GetAppointmentAsync(dto.AppointmentId);
-                if (appointment == null)
-                    return false;
+            var appointment = await _appointmentRepository.GetAppointmentAsync(dto.AppointmentId);
+            if (appointment == null)
+                return Result<bool>.ErrorResult("appointmentId  is invlaid");
 
 
-                return await _appointmentRepository.RescheduleAppointment(dto.AppointmentId, dto.NewDate, dto.NewTime);
-            }catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return false;
-            }
+            var res =  await _appointmentRepository.RescheduleAppointment(dto.AppointmentId, dto.NewDate, dto.NewTime);
+            return Result<bool>.SuccessResult(res, "rescheduled appoint succefully");
         }
 
-        public async Task<bool> CancelApppointment(int appointmentId)
+        public async Task<Result<bool>> CancelApppointment(int appointmentId)
         {
-            try
-            {
-                return await _appointmentRepository.CancelAppointment(appointmentId);
-            }catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return false;
-            }
+                var res =  await _appointmentRepository.CancelAppointment(appointmentId);
+                if (res == false)
+                    return Result<bool>.ErrorResult("failed to cancel appintment");
+
+                return Result<bool>.SuccessResult(res, "appointment cancelled succefully"); 
+            
         }
 
-        public async Task<bool> RescheduleApppointment(RescheduleAppointmentDto rescheduleAppointmentDto)
+        public async Task<Result<bool>> RescheduleApppointment(RescheduleAppointmentDto rescedule)
         {
-            try
-            {
-                return await _appointmentRepository.RescheduleAppointment(
-                    rescheduleAppointmentDto.AppointmentId,
-                    rescheduleAppointmentDto.NewDate,
-                    rescheduleAppointmentDto.NewTime
+                var res =  await _appointmentRepository.RescheduleAppointment(
+                    rescedule.AppointmentId,
+                    rescedule.NewDate,
+                    rescedule.NewTime
                     );
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return false;
-            }
+
+                if (res == false)
+                    return Result<bool>.ErrorResult("failed to reschedule appintment");
+
+                return Result<bool>.SuccessResult(res, "appointment rescheduled succefully");            
         }
 
 
-        public async Task<List<Appointment>> GetAppointmentAsync()
+        public async Task<Result<List<GetAppointmentsDto>>> GetAppointmentAsync()
         {
-            try
-            {
                 var res = await _appointmentRepository.GetAllAppointmentAsync();
-                return res;
-            }
-            catch (Exception ex)
-            {
-                //logger exception
-                return new List<Appointment>();
-            }
-        }
 
-        public Task<List<Appointment>> GetAppointmentByDateAsync(DateTime date)
-        {
-            try
-            {   
-              var res=   _appointmentRepository.GetAppointmentByDateAsync(date);
+            var appointmentDto = res.Select(s => new GetAppointmentsDto
+            {
+                Diagnoasis = s.Diagnoasis,
+                Medications = s.Medications,
+                Treatement = s.Treatement,
+                AppointmentDate =s.AppointmentDate ,
+                AppointmentTime = s.AppointmentTime ,
+                DoctorName = s.Doctor?.Name ?? "N/a",
+                DepartmentName = s.Doctor?.Department?.Name ?? "N/a"
+            }).ToList() ;
+
                 if (res == null)
-                    return null;
-
-                return res;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return null;
-            }
+                    return Result<List<GetAppointmentsDto>>.ErrorResult("appointments");
+                
+                return Result<List<GetAppointmentsDto>>.SuccessResult(appointmentDto,"appointments");           
         }
 
-        public Task<List<Appointment>> GetAppointmentBtDoctorAsync(int doctorId)
-        {
-            try
-            {   
-               var res=  _appointmentRepository.GetAppointmentBtDoctorAsync(doctorId);
-                if(res == null)
-                {
-                    return null;
-                }
-                return  res ;
-            }
-            catch (Exception ex)
+        public  async Task<Result<List<GetAppointmentsDto>>> GetAppointmentByDateAsync(DateTime date)
+        {   
+              var res=  await _appointmentRepository.GetAppointmentByDateAsync(date);
+            if (res == null)
+                return Result<List<GetAppointmentsDto>>.ErrorResult("date is invalid");
+            var appointmentDto = res.Select(s => new GetAppointmentsDto
             {
-                Console.WriteLine(ex.Message);
-                return null;
-            }
+                Diagnoasis = s.Diagnoasis,
+                Medications = s.Medications,
+                Treatement = s.Treatement,
+                AppointmentDate = s.AppointmentDate,
+                AppointmentTime = s.AppointmentTime,
+                DoctorName = s.Doctor?.Name ?? "N/a",
+                DepartmentName = s.Doctor?.Department?.Name ?? "N/a"
+            }).ToList();
+
+                
+
+                return  Result<List<GetAppointmentsDto>>.SuccessResult(appointmentDto, "appointments");            
+        }
+
+        public async  Task<Result<List<GetAppointmentsDto>>> GetAppointmentBtDoctorAsync(int doctorId)
+        { 
+               var res= await _appointmentRepository.GetAppointmentBtDoctorAsync(doctorId);
+                if(res == null)                
+                return Result<List<GetAppointmentsDto>>.ErrorResult("appointments");
+
+            var appointmentDto = res.Select(s => new GetAppointmentsDto
+            {
+                Diagnoasis = s.Diagnoasis,
+                Medications = s.Medications,
+                Treatement = s.Treatement,
+                AppointmentDate = s.AppointmentDate,
+                AppointmentTime = s.AppointmentTime,
+                DoctorName = s.Doctor?.Name ?? "N/a",
+                DepartmentName = s.Doctor?.Department?.Name ?? "N/a"
+            }).ToList();
+
+
+           return  Result<List<GetAppointmentsDto>>.SuccessResult(appointmentDto,"appointments");
         }
     }
 }

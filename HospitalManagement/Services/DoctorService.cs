@@ -1,5 +1,6 @@
 ﻿using HospitalManagement.DTO;
 using HospitalManagement.DTO.AvailabiltyDto;
+using HospitalManagement.Helpers;
 using HospitalManagement.Migrations;
 using HospitalManagement.Models;
 using HospitalManagement.Models.Helpers;
@@ -20,61 +21,52 @@ namespace HospitalManagement.Services
             _repository = doctorRepository;
             _departmentService = departmentService;
         }
-        public async Task<Doctor?> AddDoctorAsync(AddDoctorDto doctorDto)
+        public async Task<Result<Doctor>> AddDoctorAsync(AddDoctorDto doctorDto)
         {
-            try
+            
+            if (doctorDto == null)
+                return Result<Doctor>.ErrorResult("Doctor is required" );
+
+            var resData = await _departmentService.GetDepartmentByIdAsync(doctorDto.DepartmentId);
+            
+            if (resData.IsSuccess == null)
+                return Result<Doctor>.ErrorResult("invalid department id");
+
+            var doctor = new Doctor
             {
-                if (doctorDto == null)
-                    return null;
+                Name = doctorDto.Name,
+                Specialization = doctorDto.Specialization,
+                AvailabilitySlot = doctorDto.AvailabilitySlot,
+                ContactDetails = doctorDto.ContactDetails,
+                DepartmentId = doctorDto.DepartmentId,
+            };
 
-                //var deprtmentName =await  _departmentService.GetDepartmentByIdAsync(doctorDto.DepartmentId);
-                Department department= await _departmentService.GetDepartmentByIdAsync(doctorDto.DepartmentId);
-                if (department == null)
-                {
-                    return null;
-                }
+            var res =  await _repository.AddDoctorAsync(doctor);
 
-                var doctor = new Doctor
-                {
-                    Name = doctorDto.Name,
-                    Specialization = doctorDto.Specialization,
-                    AvailabilitySlot = doctorDto.AvailabilitySlot,
-                    ContactDetails = doctorDto.ContactDetails,
-                    DepartmentId = doctorDto.DepartmentId,
-                };
-                return await _repository.AddDoctorAsync(doctor);
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return null;
-            }
+            return Result<Doctor>.SuccessResult(res, "Doctor Added Succefully");
+                                                          
         }
 
-        public async Task<bool> DeleteDoctorAsync(int id)
-        {
-            try
+        public async Task<Result<bool>> DeleteDoctorAsync(int id)
+        {          
+            var isIdExists = _repository.GetDoctorByIdAsync(id);
+            if (isIdExists == null)
             {
-                var isIdExists = _repository.GetDoctorByIdAsync(id);
-                if (isIdExists == null)
-                {
-                    return false;
-                }
-                return await _repository.DeleteDoctorAsync(id);
+            return Result<bool>.ErrorResult("invliad doctor Id ");
             }
-            catch (Exception ex)
-            {
-                return false;
-            }
+            var res =  await _repository.DeleteDoctorAsync(id);
+
+            return Result<bool>.SuccessResult(res, "Deleted succefully");
+           
         }
 
-        public async Task<List<GetDoctorDto>> GetDoctorsAsync()
+        public async Task<Result<List<GetDoctorDto>>> GetDoctorsAsync()
         {
-            try
-            {
-                var doctors  = await _repository.GetAllDocotorsAsync();
-
+              var doctors  = await _repository.GetAllDocotorsAsync();
+                if (doctors == null)
+                {
+                    return Result<List<GetDoctorDto>>.ErrorResult("doctors not found");
+                }
                 var doctorDtos = doctors.Select(d => new GetDoctorDto
                 {
                     Name = d.Name,
@@ -88,58 +80,46 @@ namespace HospitalManagement.Services
                         StartTime = slot.StartTime,
                     }).ToList() ?? new()
                 }).ToList();
-                return doctorDtos;
-            }
-            catch (Exception ex)
-            {
-                //logger exception
-                return new List<GetDoctorDto>();
-            }
+                return  Result<List<GetDoctorDto>>.SuccessResult(doctorDtos ,"doctors fecthed successfully"); ;
+            
         }
 
-        public  async Task<GetDoctorDto?> GetDoctorByIdAsync(int id)
+        public  async Task<Result<GetDoctorDto>> GetDoctorByIdAsync(int id)
         {
-            try
+            var res = await _repository.GetDoctorByIdAsync(id);
+                    
+            if(res == null)
             {
-                var res = await _repository.GetDoctorByIdAsync(id);
-                    
-                if(res == null)
-                {
-                    return null;
-                }
-                Department? dept = await  _departmentService.GetDepartmentByIdAsync(res.DepartmentId) ;
-                var doctor = new GetDoctorDto
-                {
-                    Name = res.Name,
-                    Specialization= res.Specialization,
-                    ContactDetails= res.ContactDetails,
-                    DepartmentName = dept.Name ,
-                    
-                    AvailabilitySlots = res.AvailabilitySlots?.Select(slot => new GetAvailabilitySlotDto
-                    {
-                        DayofWeek = slot.DayofWeek,
-                        EndTime = slot.EndTime,
-                        StartTime = slot.StartTime,
-                    }).ToList() ?? new()
-                    
-                };
-                return doctor;
+                return Result<GetDoctorDto>.ErrorResult("invliad id ");
             }
-            catch (Exception ex)
+            var resData = await _departmentService.GetDepartmentByIdAsync(res.DepartmentId) ;
+            var doctor = new GetDoctorDto
             {
-                return null;
-            }
+                Name = res.Name,
+                Specialization= res.Specialization,
+                ContactDetails= res.ContactDetails,
+                DepartmentName = resData.Data.Name ,
+                    
+                AvailabilitySlots = res.AvailabilitySlots?.Select(slot => new GetAvailabilitySlotDto
+                {
+                    DayofWeek = slot.DayofWeek,
+                    EndTime = slot.EndTime,
+                    StartTime = slot.StartTime,
+                }).ToList() ?? new()
+                    
+            };
+            return Result<GetDoctorDto>.SuccessResult(doctor, "Fetched Succfully");
+            
         }
 
-        public async  Task<bool> UpdateDoctorAsync(UpdateDoctorDto doctorDto)
+        public async  Task<Result<bool>> UpdateDoctorAsync(UpdateDoctorDto doctorDto)
         {
-            try
-            {
+           
                 Doctor? existingDoctor = await _repository.GetDoctorByIdAsync(doctorDto.Id);
 
                 if (existingDoctor == null)
                 {
-                    return false;
+                    return Result<bool>.ErrorResult("doctor is invalid");
                 }                           
                     existingDoctor.Id = doctorDto.Id;
                     existingDoctor.Name = doctorDto.Name;
@@ -147,30 +127,26 @@ namespace HospitalManagement.Services
                     existingDoctor.AvailabilitySlot = doctorDto.AvailabilitySlot ;
                     existingDoctor.ContactDetails =doctorDto.ContactDetails;             
 
-                return await _repository.UpdateDoctorAsync(existingDoctor);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return false;
-            }
+               var res =  await _repository.UpdateDoctorAsync(existingDoctor);
+
+            return Result<bool>.SuccessResult(res, "Updated Succesfully");
+
+
+
         }
 
-        public async Task<bool> CreateAvaialbiltySlotAsync(CreateAvailabilitySlotDto dto)
+        public async Task<Result<bool>> CreateAvaialbiltySlotAsync(CreateAvailabilitySlotDto dto)
         {
-            try
-            {
                 var doctor = _repository.GetDoctorByIdAsync(dto.DoctorId);
                 if (doctor == null)
                 {
-                    return false;
+                    return Result<bool>.ErrorResult("invalid doctor id ");
                 }
 
-                var exisitngSlots = await _repository.GetBySlotDoctorIdAsync(dto.DoctorId);
-                ///overlapping 
-                ///
+                var exisitngSlots = await GetBySlotDoctorIdAsync(dto.DoctorId);
                 
-                bool isOverlapping =   exisitngSlots.Any(slot => 
+                
+                bool isOverlapping =   exisitngSlots.Data.Any(slot => 
                 slot.DayofWeek == dto.DayofWeek && (
                     (dto.StartTime >= slot.StartTime && dto.StartTime < slot.EndTime) ||
                     (dto.EndTime > slot.StartTime && dto.EndTime <= slot.EndTime) ||
@@ -179,7 +155,7 @@ namespace HospitalManagement.Services
                 );
 
                 if (isOverlapping)
-                    return false;
+                    return Result<bool>.ErrorResult("Could not add availability slot. It might be overlapping or invalid.");
 
 
                 var slot = new AvailabilitySlot
@@ -189,26 +165,33 @@ namespace HospitalManagement.Services
                     StartTime = dto.StartTime,
                     EndTime = dto.EndTime
                 };
-                return await _repository.CreateAvaialbiltySlotAsync(slot);
-            }
-            catch (Exception ex)
-            {
-                return false;
-            }
+               var res =  await _repository.CreateAvaialbiltySlotAsync(slot);
+                return Result<bool>.SuccessResult(res, "slot added succfully");
+            
         }
 
-        public async Task<List<AvailabilitySlot>> GetBySlotDoctorIdAsync(int doctorId)
+        public async Task<Result<List<GetAvailabilitySlotDto>>> GetBySlotDoctorIdAsync(int doctorId)
         {
-            try
+            var isValidDoctor =await _repository.GetDoctorByIdAsync(doctorId);
+            if(isValidDoctor == null)
             {
-                return await _repository.GetBySlotDoctorIdAsync(doctorId);
-                   
+                return Result<List<GetAvailabilitySlotDto>>.ErrorResult("invlid doctor id ");
             }
-            catch (Exception ex)
+                var res =  await _repository.GetBySlotDoctorIdAsync(doctorId);
+
+            var avaialbalitySlotsDto = res.Select(a => new GetAvailabilitySlotDto
             {
-                Console.WriteLine(ex.Message);
-                return new List<AvailabilitySlot>();
+                DayofWeek = a.DayofWeek,
+                StartTime = a.StartTime,
+                EndTime = a.EndTime                
+            }).ToList() ?? new();
+
+            if(res.Count == 0)
+            {
+                return Result<List<GetAvailabilitySlotDto>>.SuccessResult(avaialbalitySlotsDto, $"no avalibility slot found for {doctorId}");
             }
+            return Result<List<GetAvailabilitySlotDto>>.SuccessResult(avaialbalitySlotsDto, "avalibilty slot fetched succfully");
+           
         }
     }
 }

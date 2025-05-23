@@ -80,7 +80,7 @@ namespace HospitalManagement.Controllers
         }
 
         [HttpGet("search/patient")]
-        public async Task<IActionResult> SearchPatients(string name,  string? email = null, string? mobile =null)
+        public async Task<IActionResult> SearchPatients(string? name,  string? email = null, string? mobile =null)
         {
             var result = await _patientService.SearchPatientsAsync(name, email, mobile);
             return Ok(result);

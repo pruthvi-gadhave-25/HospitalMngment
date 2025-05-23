@@ -1,4 +1,5 @@
-﻿using HospitalManagement.Migrations;
+﻿using HospitalManagement.DTO.AvailabiltyDto;
+using HospitalManagement.Migrations;
 using HospitalManagement.Models;
 using HospitalManagement.Models.Helpers;
 

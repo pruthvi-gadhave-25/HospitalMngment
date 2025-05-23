@@ -33,6 +33,8 @@ namespace HospitalManagement.Repository
             {
                 var res=  await _context.Patients
                     .Include( a=> a.Appointments)
+                    .ThenInclude(d => d.Doctor)
+                    .ThenInclude(d => d.Department)
                     .FirstOrDefaultAsync( p => p.Id ==  id );
                 if(res == null)
                 {
@@ -52,7 +54,9 @@ namespace HospitalManagement.Repository
             {
                 var res =  await _context.Patients
                     .Include ( a=> a.Appointments)
-                    .ToListAsync();
+                    .ThenInclude(d => d.Doctor)
+                    .ThenInclude(d => d.Department)
+                    .ToListAsync() ;
                 return res;
             }
             catch(Exception ex)

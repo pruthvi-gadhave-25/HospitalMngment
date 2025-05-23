@@ -52,7 +52,11 @@ namespace HospitalManagement.Repository
         {
             try
             {
-                var appointments = await _context.Appointments.ToListAsync();
+                var appointments = await _context.Appointments
+                    .Include(d => d.Doctor)
+                    .ThenInclude( d => d.Department)
+                    .Include(p =>p.Patient)
+                    .ToListAsync();
 
                 return appointments ?? new List<Appointment>();
             }
@@ -68,7 +72,11 @@ namespace HospitalManagement.Repository
         {
             try
             {
-                var  appointments =await   _context.Appointments.Where(a => a.DoctorId == doctorId).ToListAsync();
+                var  appointments =await   _context.Appointments
+                    .Include( d => d.Doctor)
+                    .ThenInclude( d=> d.Department)
+                    .Where(a => a.DoctorId == doctorId).ToListAsync();
+
                 if(appointments == null) 
                     return null;
 
@@ -85,7 +93,11 @@ namespace HospitalManagement.Repository
         {
             try
             {
-                var appointments = await _context.Appointments.Where(a => a.AppointmentDate == date).ToListAsync();
+                var appointments = await _context.Appointments
+                    .Include(d => d.Doctor)
+                    .ThenInclude(d => d.Department)
+                    .Where(a => a.AppointmentDate == date).ToListAsync();
+
                 if (appointments == null)
                     return null;
 

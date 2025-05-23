@@ -1,4 +1,5 @@
 ﻿using HospitalManagement.Data;
+using HospitalManagement.DTO.AvailabiltyDto;
 using HospitalManagement.Migrations;
 using HospitalManagement.Models;
 using HospitalManagement.Models.Helpers;
@@ -135,8 +136,9 @@ namespace HospitalManagement.Repository
         {
             try
             {
-             return await _context.AvailabilitySlots.Where(d => d.DoctorId == doctorId).ToListAsync();
-                //return res;
+           
+             var res =  await _context.AvailabilitySlots.Where(d => d.DoctorId == doctorId).ToListAsync();                
+                return res;
             }
             catch (Exception ex)
             {

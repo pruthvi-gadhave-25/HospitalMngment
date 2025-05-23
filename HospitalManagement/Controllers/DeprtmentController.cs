@@ -1,4 +1,5 @@
-﻿using HospitalManagement.Models;
+﻿using HospitalManagement.Helpers;
+using HospitalManagement.Models;
 using HospitalManagement.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -6,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HospitalManagement.Controllers
 {
-    [Authorize (Roles ="Admin, Doctor, Patient")]
+    //[Authorize (Roles ="Admin, Doctor, Patient")]
     [Route("api/[controller]")]
     [ApiController]
     public class DeprtmentController : ControllerBase
@@ -22,22 +23,15 @@ namespace HospitalManagement.Controllers
         [HttpGet("get/departments")]
         public async  Task<IActionResult> GetDepartments()
         {
-            try
-            {
                 var res = await _deptService.GetDepartmentAsync();
 
                 if (res == null)
                 {
-                    return NotFound("No departments found.");
+                    return ApiResponseHelper.CreatFailure(res.Message, 400);
                 }
 
-                return Ok(res);
-            }
-            catch (Exception ex)
-            {   //logexception 
-                Console.WriteLine(ex);
-                return StatusCode(500, "An error occurred while get  departments.");
-            }
+                return ApiResponseHelper.CreateSuccess(res.Data,res.Message);
+            
         }
 
 
@@ -45,90 +39,64 @@ namespace HospitalManagement.Controllers
         [HttpPost("add/department")]
         public async Task<IActionResult> CreateDepartment(Department department)
         {
-            try
-            {
                 var res =  await _deptService.AddDepartmentAsync(department);  
                 if (res == null)
                 {
-                    return NotFound("invalid data");
-                }
-                return Ok("Added Successfully");
+                return ApiResponseHelper.CreatFailure(res.Message, 400);
             }
-            catch(Exception ex)
-            {
-                //log 
-                return StatusCode(500, "Error occured while adding Department"); 
-            }
+            return ApiResponseHelper.CreateSuccess(res.Data, res.Message);
+
+
         }
 
         [HttpPut("update/department")]
         public async Task<IActionResult> UpdateDepartment(Department department)
-        {
-            try
-            {   
-                if(department == null)
-                {
-                    return BadRequest("invalid data");
-                }
-                var res = await _deptService.UpdateDepartmentAsync(department);
-                if(res ==  false ) 
-                { 
-                    return BadRequest("invalid data or Id "); 
-                }
-                return Ok("Updated succefully");
-            }
-            catch(Exception ex)
+        { 
+            if(department == null)
             {
-                Console.WriteLine(ex.Message);
-                return BadRequest("not updated ");
+                throw new ArgumentNullException("department is not valid");
             }
+
+             var res = await _deptService.UpdateDepartmentAsync(department);
+
+            if(res.IsSuccess ==  false ) 
+            {
+                return ApiResponseHelper.CreatFailure(res.Message, 400);
+            }
+
+            return ApiResponseHelper.CreateSuccess(res.Data, res.Message);
+
         }
 
         [HttpDelete("delete/department/{id}")]
         public async Task<IActionResult> DeleteDepartmentById(int id)
         {
-            try
-            {
                 var validDept = await _deptService.GetDepartmentByIdAsync(id);
                 if(validDept == null)
                 {
-                    return BadRequest("Invlaid department");
+                    return ApiResponseHelper.CreatFailure(validDept.Message, 400);
                 }
                 var res = await _deptService.DeleteDepartmentAsync(id);
-                if (res == false)
+                if (res.IsSuccess == false)
                 {
-                    return BadRequest("invalid id ");
+                    return ApiResponseHelper.CreatFailure(res.Message, 400);
                 }
-                return Ok("deleted succefully");
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine( ex.Message);
-                return BadRequest("invalid id ");
-            }
+                return ApiResponseHelper.CreateSuccess(res.Data, res.Message);
+            
         }
 
 
         [HttpGet("get/deparment/{id}")]
         public async Task<IActionResult> getDepartmentByIdAsync(int id)
         {
-            try
-            {
-                var res = await _deptService.GetDepartmentByIdAsync(id);
+            var res = await _deptService.GetDepartmentByIdAsync(id);
 
-                if(res == null)
-                {
-                    return NotFound("Not found");
-                }
-                return Ok(res);
-                
-            }
-            catch(Exception ex)
+            if(res == null)
             {
-                Console.WriteLine(ex.Message);
-                return BadRequest("id is invalid");
+                return ApiResponseHelper.CreatFailure(res.Message, 400);
             }
+            return ApiResponseHelper.CreateSuccess(res.Data, res.Message);
+
         }
     }
 }

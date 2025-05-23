@@ -1,4 +1,6 @@
-﻿using HospitalManagement.DTO;
+﻿using Azure;
+using HospitalManagement.DTO;
+using HospitalManagement.Helpers;
 using HospitalManagement.Models;
 using HospitalManagement.Repository.Interface;
 using HospitalManagement.Services.Interface;
@@ -40,39 +42,35 @@ namespace HospitalManagement.Services
             }
         }
 
-        public async Task<GetPatientDto> GetPatientByIdAsync(int id)
-        {
-            try
-            {
-                if (id == null)
-                {
-                    return null;
-                }
-                var res = await _patientRepository.GetPatientByIdAsync(id);
-
-                var patient = new GetPatientDto
-                {
-                    Name = res.Name,
-                    Email = res.Email,
-                    Mobile = res.Mobile,
-                    Gender = res.Gender,
-                    Dob = res.Dob,
-                    Appointments = res.Appointments?.Select(p => new GetAppointmentsDto
-                    {
-                        Diagnoasis = p.Diagnoasis,
-                        Treatement = p.Treatement,
-                        Medications = p.Medications,
-                        DepartmentName = p.Doctor?.Department?.Name ?? "N/A",
-                        DoctorName = p.Doctor.Name
-                    }).ToList(),
-                };
-                return patient;
-
-            }
-            catch (Exception ex)
+        public async Task<Result<GetPatientDto>> GetPatientByIdAsync(int id)
+        {           
+            if (id == null)
             {
                 return null;
             }
+            var res = await _patientRepository.GetPatientByIdAsync(id);
+            if(res  == null)
+            {
+                return Result<GetPatientDto>.ErrorResult("patient not found");
+            }
+            var patient = new GetPatientDto
+            {
+                Id = res.Id,
+                Name = res.Name,
+                Email = res.Email,
+                Mobile = res.Mobile,
+                Gender = res.Gender,
+                Dob = res.Dob,
+                Appointments = res.Appointments?.Select(p => new GetAppointmentsDto
+                {
+                    Diagnoasis = p.Diagnoasis,
+                    Treatement = p.Treatement,
+                    Medications = p.Medications,
+                    DepartmentName = p.Doctor?.Department?.Name?? "N/A",
+                    DoctorName = p.Doctor?.Name ?? "Unknown Doctor"
+                }).ToList(),
+            };
+            return Result<GetPatientDto>.SuccessResult(patient , "patient fetched succsfully");            
         }
 
         public async  Task<List<GetPatientDto>> GetPatientsAsync()
@@ -82,6 +80,7 @@ namespace HospitalManagement.Services
                 var res = await _patientRepository.GetPatientsAsync();
                 var patients =res.Select( p => new GetPatientDto
                 {
+                    Id =p.Id,
                     Name = p.Name,
                     Email = p.Email,
                     Mobile = p.Mobile,
@@ -109,7 +108,7 @@ namespace HospitalManagement.Services
             }
         }
 
-        public Task<List<Patient>> SearchPatientsAsync(string name, string? email, string? mobile)
+        public Task<List<Patient>> SearchPatientsAsync(string?  name, string? email, string? mobile)
         {
             try{
                 return _patientRepository.SearchPatientAsync(name, email, mobile);

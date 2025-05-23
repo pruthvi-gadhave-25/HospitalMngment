@@ -1,13 +1,14 @@
-﻿using HospitalManagement.Models;
+﻿using HospitalManagement.Helpers;
+using HospitalManagement.Models;
 
 namespace HospitalManagement.Services.Interface
 {
     public interface IDepartmentService
     {
-        Task<List<Department>> GetDepartmentAsync();
-        Task<bool> UpdateDepartmentAsync(Department department);
-        Task<bool> DeleteDepartmentAsync(int id);
-        Task<Department?> GetDepartmentByIdAsync(int id);
-        Task<Department?> AddDepartmentAsync(Department deprtment);
+        Task<Result<List<Department>>> GetDepartmentAsync();
+        Task<Result<bool>> UpdateDepartmentAsync(Department department);
+        Task<Result<bool>> DeleteDepartmentAsync(int id);
+        Task<Result<Department?>> GetDepartmentByIdAsync(int id);
+        Task<Result<Department?>> AddDepartmentAsync(Department deprtment);
     }
 }
