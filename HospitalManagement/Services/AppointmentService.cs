@@ -1,6 +1,7 @@
 ﻿using HospitalManagement.DTO;
 using HospitalManagement.Helpers;
 using HospitalManagement.Models;
+using HospitalManagement.Models.Mails;
 using HospitalManagement.Repository.Interface;
 using HospitalManagement.Services.Interface;
 
@@ -12,17 +13,20 @@ namespace HospitalManagement.Services
         private readonly IPatientService _patientService;
         private readonly IDoctorService _doctorService;
         private readonly ILeaveRepository _leaveRspository;
+        private readonly IEmailService _emailService;
 
         public AppointmentService(IAppointmentRepository appointmentRepository,
             IPatientService patientService,
             IDoctorService doctorService,
-            ILeaveRepository leaveRepository
+            ILeaveRepository leaveRepository,
+            IEmailService emailService
             )
         {
             _appointmentRepository = appointmentRepository;
             _patientService = patientService;
             _doctorService = doctorService;
             _leaveRspository = leaveRepository;
+            _emailService = emailService;
         }
 
         public async  Task<Result<bool>> BookAppointment(BookAppointmentDto appointmentDto)
@@ -57,7 +61,6 @@ namespace HospitalManagement.Services
                 return  Result<bool>.ErrorResult("slot is not available");
             }
 
-
             var appointment = new Appointment
             {
                 PatientID = appointmentDto.PatientID,
@@ -71,6 +74,23 @@ namespace HospitalManagement.Services
             };
 
                var res =  await _appointmentRepository.BookAppointment(appointment);
+            if(res)
+            {
+
+                var emailData = new MailRequest()
+                {
+                    Subject = "Appointment Details",
+                    ToEmail = appointment.Patient.Email ,
+                    Body = $"Dear Patient\n" +
+                    $"Date : {appointment.AppointmentDate} \n" +
+                    $"Time : {appointment.AppointmentTime}\n" +
+                    $"Doctor: {appointment.Doctor.Name}\n\n" +
+                    $"Thanks"
+                    
+                };
+             var resData =   await  _emailService.EmailSendServices(emailData);
+                return Result<bool>.ErrorResult(resData.Message);
+            }
             return Result < bool>.SuccessResult(res, "appointment booked succfully");            
         }
 
