@@ -11,55 +11,64 @@ namespace HospitalManagement.Services
         private readonly IAppointmentRepository _appointmentRepository;
         private readonly IPatientService _patientService;
         private readonly IDoctorService _doctorService;
+        private readonly ILeaveRepository _leaveRspository;
 
         public AppointmentService(IAppointmentRepository appointmentRepository,
             IPatientService patientService,
-            IDoctorService doctorService
+            IDoctorService doctorService,
+            ILeaveRepository leaveRepository
             )
         {
             _appointmentRepository = appointmentRepository;
             _patientService = patientService;
             _doctorService = doctorService;
+            _leaveRspository = leaveRepository;
         }
 
         public async  Task<Result<bool>> BookAppointment(BookAppointmentDto appointmentDto)
         {
-                var patient =  await _patientService.GetPatientByIdAsync(appointmentDto.PatientID);
+            var patient =  await _patientService.GetPatientByIdAsync(appointmentDto.PatientID);
                
-                var doctor = await _doctorService.GetDoctorByIdAsync(appointmentDto.DoctorId);
+            var doctor = await _doctorService.GetDoctorByIdAsync(appointmentDto.DoctorId);
 
             if ((patient == null) || (doctor == null))
                 return Result<bool>.ErrorResult("patient or doctor is invalid");
 
-                var slots = await _doctorService.GetBySlotDoctorIdAsync(appointmentDto.DoctorId);
-                var appointTime = appointmentDto.AppointmentTime;
-                var appointDay = appointmentDto.AppointmentDate.DayOfWeek;
+            var isDoctorOnLeave = await _leaveRspository.IsDoctorOnLeaveAsync(appointmentDto.DoctorId , appointmentDto.AppointmentDate);
+            if (isDoctorOnLeave)
+            {
+                return Result<bool>.ErrorResult("docotr is on leave");
+            }
+        
+            var slots = await _doctorService.GetBySlotDoctorIdAsync(appointmentDto.DoctorId);
+            var appointTime = appointmentDto.AppointmentTime;
+            var appointDay = appointmentDto.AppointmentDate.DayOfWeek;
 
 
-                var isSlotAvailable = slots.Data.Any(slot =>
-                slot.DayofWeek == appointDay &&
-                slot.StartTime <= appointTime && 
-                appointTime < slot.EndTime
-                );
+            var isSlotAvailable = slots.Data.Any(slot =>
+            slot.DayofWeek == appointDay &&
+            slot.StartTime <= appointTime && 
+            appointTime < slot.EndTime
+            );
 
 
-                if (!isSlotAvailable)
-                {
-                    return  Result<bool>.ErrorResult("slot is not available");
-                }
+            if (!isSlotAvailable)
+            {
+                return  Result<bool>.ErrorResult("slot is not available");
+            }
 
 
-                var appointment = new Appointment
-                {
-                    PatientID = appointmentDto.PatientID,
-                    DoctorId = appointmentDto.DoctorId,
-                    AppointmentDate = appointmentDto.AppointmentDate,
-                    AppointmentTime = appointmentDto.AppointmentTime,
-                    Diagnoasis = appointmentDto.Diagnoasis,
-                    Medications = appointmentDto.Medications,
-                    Treatement = appointmentDto.Treatement,
+            var appointment = new Appointment
+            {
+                PatientID = appointmentDto.PatientID,
+                DoctorId = appointmentDto.DoctorId,
+                AppointmentDate = appointmentDto.AppointmentDate,
+                AppointmentTime = appointmentDto.AppointmentTime,
+                Diagnoasis = appointmentDto.Diagnoasis,
+                Medications = appointmentDto.Medications,
+                Treatement = appointmentDto.Treatement,
                    
-                };
+            };
 
                var res =  await _appointmentRepository.BookAppointment(appointment);
             return Result < bool>.SuccessResult(res, "appointment booked succfully");            

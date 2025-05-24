@@ -137,7 +137,7 @@ namespace HospitalManagement.Services
 
         public async Task<Result<bool>> CreateAvaialbiltySlotAsync(CreateAvailabilitySlotDto dto)
         {
-                var doctor = _repository.GetDoctorByIdAsync(dto.DoctorId);
+                var doctor = await _repository.GetDoctorByIdAsync(dto.DoctorId);
                 if (doctor == null)
                 {
                     return Result<bool>.ErrorResult("invalid doctor id ");
