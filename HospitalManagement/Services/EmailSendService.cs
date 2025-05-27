@@ -15,7 +15,6 @@ namespace HospitalManagement.Services
         public EmailSendService(IOptions<MailSettings> options)
         {
             _mailSettings = options.Value;
-
         }
         public async Task<Result<string>> EmailSendServices(MailRequest mailRequest)
         {

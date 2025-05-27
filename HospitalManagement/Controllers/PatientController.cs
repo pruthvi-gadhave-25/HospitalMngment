@@ -1,11 +1,13 @@
 ﻿using HospitalManagement.DTO;
 using HospitalManagement.Models;
 using HospitalManagement.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HospitalManagement.Controllers
 {
+    [Authorize(Roles = "Admin, Receptionist")]
     [Route("api/[controller]")]
     [ApiController]
     public class PatientController : ControllerBase
@@ -18,7 +20,7 @@ namespace HospitalManagement.Controllers
             _patientService = patientService;
         }
 
-
+        [Authorize(Roles = "Doctor")]
         [HttpGet("get/patients")]
         public async Task<IActionResult> GetPatients()
         {
@@ -40,6 +42,7 @@ namespace HospitalManagement.Controllers
             }
         }
 
+        [Authorize(Roles = "Doctor")]
         [HttpGet("get/patient/{id}")]
         public async Task<IActionResult> GetPatientById(int id)
         {
@@ -79,6 +82,7 @@ namespace HospitalManagement.Controllers
             }
         }
 
+        [Authorize(Roles = "Doctor")]
         [HttpGet("search/patient")]
         public async Task<IActionResult> SearchPatients(string? name,  string? email = null, string? mobile =null)
         {

@@ -2,11 +2,13 @@
 using HospitalManagement.Helpers;
 using HospitalManagement.Models;
 using HospitalManagement.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HospitalManagement.Controllers
 {
+    [Authorize(Roles="Admin" )]
     [Route("api/[controller]")]
     [ApiController]
     public class LeaveController: ControllerBase
@@ -18,6 +20,7 @@ namespace HospitalManagement.Controllers
             _leaveService = serviceLeave;
         }
 
+        [Authorize(Roles = "Receptionist")]
         [HttpGet("pending")]
         public async Task<IActionResult> GetPendingLeaves()
         {
@@ -29,7 +32,7 @@ namespace HospitalManagement.Controllers
             return ApiResponseHelper.CreateSuccess(result.Data, result.Message,200);
         }
 
-
+        [Authorize(Roles = "Doctor,Receptionist")]
         [HttpPost("add/leave")]
         public async Task<IActionResult> AddLeave( AddLeaveDto leave)
         {
@@ -40,7 +43,7 @@ namespace HospitalManagement.Controllers
             }
             return ApiResponseHelper.CreateSuccess(result.Data, result.Message, 200);
         }
-
+        
         [HttpPut("approve/status/{leaveId}")]
         public async Task<IActionResult> UpdateLeaveStatus(int leaveId, LeaveStatus status, string approvedBy)
         {

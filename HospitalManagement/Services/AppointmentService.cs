@@ -14,12 +14,14 @@ namespace HospitalManagement.Services
         private readonly IDoctorService _doctorService;
         private readonly ILeaveRepository _leaveRspository;
         private readonly IEmailService _emailService;
+        private readonly IDepartmentService _departmentService;
 
         public AppointmentService(IAppointmentRepository appointmentRepository,
             IPatientService patientService,
             IDoctorService doctorService,
             ILeaveRepository leaveRepository,
             IEmailService emailService
+            ,IDepartmentService departmentService
             )
         {
             _appointmentRepository = appointmentRepository;
@@ -27,6 +29,7 @@ namespace HospitalManagement.Services
             _doctorService = doctorService;
             _leaveRspository = leaveRepository;
             _emailService = emailService;
+            _departmentService = departmentService;
         }
 
         public async  Task<Result<bool>> BookAppointment(BookAppointmentDto appointmentDto)
@@ -70,7 +73,8 @@ namespace HospitalManagement.Services
                 Diagnoasis = appointmentDto.Diagnoasis,
                 Medications = appointmentDto.Medications,
                 Treatement = appointmentDto.Treatement,
-                   
+                Status = AppointmentStatus.Pending
+
             };
 
                var res =  await _appointmentRepository.BookAppointment(appointment);
@@ -142,6 +146,7 @@ namespace HospitalManagement.Services
                 AppointmentDate =s.AppointmentDate ,
                 AppointmentTime = s.AppointmentTime ,
                 DoctorName = s.Doctor?.Name ?? "N/a",
+                Status = s.Status,
                 DepartmentName = s.Doctor?.Department?.Name ?? "N/a"
             }).ToList() ;
 
@@ -164,6 +169,7 @@ namespace HospitalManagement.Services
                 AppointmentDate = s.AppointmentDate,
                 AppointmentTime = s.AppointmentTime,
                 DoctorName = s.Doctor?.Name ?? "N/a",
+                Status = s.Status,
                 DepartmentName = s.Doctor?.Department?.Name ?? "N/a"
             }).ToList();
 
@@ -176,7 +182,7 @@ namespace HospitalManagement.Services
         { 
                var res= await _appointmentRepository.GetAppointmentBtDoctorAsync(doctorId);
                 if(res == null)                
-                return Result<List<GetAppointmentsDto>>.ErrorResult("appointments");
+                return Result<List<GetAppointmentsDto>>.ErrorResult("error occured or appointments not found");
 
             var appointmentDto = res.Select(s => new GetAppointmentsDto
             {
@@ -186,11 +192,109 @@ namespace HospitalManagement.Services
                 AppointmentDate = s.AppointmentDate,
                 AppointmentTime = s.AppointmentTime,
                 DoctorName = s.Doctor?.Name ?? "N/a",
+                Status = s.Status,
                 DepartmentName = s.Doctor?.Department?.Name ?? "N/a"
             }).ToList();
 
 
            return  Result<List<GetAppointmentsDto>>.SuccessResult(appointmentDto,"appointments");
+        }
+
+        public async Task<Result<List<GetAppointmentsDto>>> GetDailyAppointmentByDepartmentAsync(int departmentId, DateTime date, int pageIndex, int pageSize)
+        {
+           var department = await  _departmentService.GetDepartmentByIdAsync(departmentId);
+            if (department == null)
+                return Result<List<GetAppointmentsDto>>.ErrorResult("deprtmentId is  not valid ");
+
+            var res = await  _appointmentRepository.GetDailyAppointmetsByDepartment(departmentId, date, pageIndex, pageSize); 
+            if(res == null)
+            {
+                return Result<List<GetAppointmentsDto>>.ErrorResult("no appointments found");
+            }
+            var appointmentDto = res.Select(s => new GetAppointmentsDto
+            {
+                Diagnoasis = s.Diagnoasis,
+                Medications = s.Medications,
+                Treatement = s.Treatement,
+                AppointmentDate = s.AppointmentDate,
+                AppointmentTime = s.AppointmentTime,
+                DoctorName = s.Doctor?.Name ?? "N/a",
+                DepartmentName = s.Doctor?.Department?.Name ?? "N/a",
+                Status = s.Status,
+            }).ToList();
+            return Result<List<GetAppointmentsDto>>.SuccessResult(appointmentDto, "Data found ");
+        }
+
+        public async Task<Result<List<GetAppointmentsDto>>> GetDailyAppointmentByDocotorAsync(int doctorId, DateTime date, int pageIndex, int pageSize)
+        {
+            var doctor = await _doctorService.GetDoctorByIdAsync(doctorId);
+            if (doctor == null)
+                return Result<List<GetAppointmentsDto>>.ErrorResult("docotr id is not valid ");
+
+            var res = await _appointmentRepository.GetDailyAppointmetsByDoctor(doctorId, date, pageIndex, pageSize);
+            if (res == null)
+            {
+                return Result<List<GetAppointmentsDto>>.ErrorResult("no appointments found");
+            }
+            var appointmentDto = res.Select(s => new GetAppointmentsDto
+            {
+                Diagnoasis = s.Diagnoasis,
+                Medications = s.Medications,
+                Treatement = s.Treatement,
+                AppointmentDate = s.AppointmentDate,
+                AppointmentTime = s.AppointmentTime,
+                DoctorName = s.Doctor?.Name ?? "N/a",
+                DepartmentName = s.Doctor?.Department?.Name ?? "N/a",
+                Status = s.Status
+            }).ToList();
+            return Result<List<GetAppointmentsDto>>.SuccessResult(appointmentDto, "Data found ");
+        }
+
+        public async Task<Result<bool>> UpdateAppointmentStatus(int appointmentId)
+        {
+            var appointment = await  _appointmentRepository.GetAppointmentAsync(appointmentId);
+            if (appointment == null)
+            {
+                return Result<bool>.ErrorResult("Appointment not found.");
+            }
+
+            if (appointment.Status == AppointmentStatus.Completed)
+            {
+                return Result<bool>.ErrorResult("Appointment is already marked as completed.");
+            }
+
+            appointment.Status = AppointmentStatus.Completed;
+           var updated =  await _appointmentRepository.UpdateAppointentAsync(appointmentId);
+
+            return updated ?
+                Result<bool>.SuccessResult(updated, "updated  appointment as completed ") :
+                Result<bool>.ErrorResult("Failed to update appointment ");
+
+        }
+
+        public async Task<Result<VisitsAddPatientDto>> GetVisitCountPatientAysnc(int patientId)
+        {   
+            //if(patientId  )
+            var appointments =  await _appointmentRepository.GetPatientVisitCountAsync(patientId);
+            if(appointments ==null)
+            {
+                return Result<VisitsAddPatientDto>.ErrorResult("no appointment found");
+            }
+            var today = DateTime.Today;
+            var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
+            var startOfMonth = new DateTime(today.Year, today.Month, 1);
+
+            int todaysVisit = appointments.Count(a => a.AppointmentDate.Date == today);
+            int weeksVisits = appointments.Count(a => a.AppointmentDate.Date >= startOfWeek);
+            int monthVisits = appointments.Count(a => a.AppointmentDate.Date >= startOfMonth);
+
+            var visits = new VisitsAddPatientDto
+            {
+                TodaysVisits = todaysVisit,
+                ThisWeekVisits = weeksVisits,
+                ThisMontsVisits = monthVisits,
+            };
+            return Result<VisitsAddPatientDto>.SuccessResult(visits, "visits of patient found");
         }
     }
 }

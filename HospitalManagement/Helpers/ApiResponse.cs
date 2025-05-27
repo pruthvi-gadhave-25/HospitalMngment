@@ -2,7 +2,7 @@
 
 namespace HospitalManagement.Helpers
 {
-    public    class ApiResponse<T>
+    public class ApiResponse<T>
     {
         public string Message { get; set; }
         public int StatusCode { get; set; }

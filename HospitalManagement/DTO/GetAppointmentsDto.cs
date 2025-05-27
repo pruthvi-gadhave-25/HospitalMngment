@@ -1,4 +1,5 @@
-﻿using HospitalManagement.Models;
+﻿using HospitalManagement.Helpers;
+using HospitalManagement.Models;
 
 namespace HospitalManagement.DTO
 {
@@ -16,6 +17,7 @@ namespace HospitalManagement.DTO
 
         public string   DoctorName { get; set; }
         public string DepartmentName { get; set; }
+        public AppointmentStatus Status { get; set; }
 
     }
 

@@ -1,4 +1,6 @@
-﻿namespace HospitalManagement.Models
+﻿using HospitalManagement.Helpers;
+
+namespace HospitalManagement.Models
 {
     public class Appointment
     {        
@@ -14,6 +16,8 @@
         public DateTime AppointmentDate { get; set; }
 
         public TimeOnly AppointmentTime { get; set; }
+
+        public AppointmentStatus Status { get; set; }
  
 
         public Patient? Patient { get; set; }
