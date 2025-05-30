@@ -10,17 +10,20 @@ namespace HospitalManagement.Services
     {
         private readonly ILeaveRepository _leaveRepository;
         private readonly IDoctorService _doctorService;
+        private readonly ILogger<LeaveService> _logger;
 
-        public LeaveService(ILeaveRepository leaveRepo , IDoctorService doctorService)
+        public LeaveService(ILeaveRepository leaveRepo , IDoctorService doctorService ,ILogger<LeaveService> logger)
         {
             _doctorService = doctorService; 
-            _leaveRepository = leaveRepo;   
+            _leaveRepository = leaveRepo;
+            _logger = logger;
         }
         public async Task<Result<bool>> AddLeaveAsync(AddLeaveDto leave)
         {
             var doctor =  await _doctorService.GetDoctorByIdAsync(leave.DoctorId);
             if(doctor == null)
             {
+                _logger.LogError("doctor is not found");
                 return Result<bool>.ErrorResult("docotor is invalid");
             }
 
@@ -36,8 +39,10 @@ namespace HospitalManagement.Services
             var res =  await _leaveRepository.AddLeaveAsync(newLeaveDto);
             if(res ==  false)
             {
-                return Result<bool>.ErrorResult("erro occured while adding Leave");
+                _logger.LogError("Error occured while adding Leaved");
+                return Result<bool>.ErrorResult("Error occured while adding Leave");
             }
+            _logger.LogInformation("Leave Added succefully");
             return Result<bool>.SuccessResult(res, "Levae added succefully");
         }
 
@@ -47,6 +52,7 @@ namespace HospitalManagement.Services
 
             if (pendingLeaves == null || pendingLeaves.Count()== 0)
             {
+                _logger.LogError("No pending leaves found " );
                 return Result<List<GetLeavesDto>>.ErrorResult("No pending leave requests found.");
             }
             var newLeaves = pendingLeaves.Select(p => new GetLeavesDto
@@ -60,6 +66,7 @@ namespace HospitalManagement.Services
                 ApprovedBy = p.ApprovedBy,
             }).ToList();
 
+            _logger.LogInformation("leaves fetched succefully");
             return Result<List<GetLeavesDto>>.SuccessResult(newLeaves, "Pending leaves fetched successfully.");
         }
 
@@ -67,8 +74,11 @@ namespace HospitalManagement.Services
         {
             var updated = await _leaveRepository.UpdateLeaveStatusAsync(leaveId, status, approvedBy);
             if (!updated)
+            {
+                _logger.LogError("Leave not found or update failed");
                 return Result<bool>.ErrorResult("Leave not found or update failed");
-
+            }
+            _logger.LogInformation("Updated Succefully");
             return Result<bool>.SuccessResult(true, $"Leave updated {status} successfully");
         }
 

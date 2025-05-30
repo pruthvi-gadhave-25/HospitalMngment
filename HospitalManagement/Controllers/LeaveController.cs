@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HospitalManagement.Controllers
 {
-    [Authorize(Roles="Admin" )]
+    //[Authorize(Roles="Admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class LeaveController: ControllerBase
@@ -18,15 +18,18 @@ namespace HospitalManagement.Controllers
         public LeaveController(IServiceLeaveManagement serviceLeave)
         {
             _leaveService = serviceLeave;
+            
         }
 
-        [Authorize(Roles = "Receptionist")]
+        //[Authorize(Roles = "Receptionist, Doctor")]
         [HttpGet("pending")]
         public async Task<IActionResult> GetPendingLeaves()
         {
             var result = await _leaveService.GetPendingLeavesAsync();
+           
             if(!result.IsSuccess)
             {
+                //_logger.LogError($"Error occured : {result.Message}");
                 return ApiResponseHelper.CreatFailure(result.Message, 400);
             }
             return ApiResponseHelper.CreateSuccess(result.Data, result.Message,200);

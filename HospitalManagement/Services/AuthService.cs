@@ -12,13 +12,14 @@ namespace HospitalManagement.Services
         private readonly IUserRepository _userRepository;
         private readonly IRoleRepository _roleRepository;
         private readonly IJwtTokenGenerator _jwtTokenGenerator;
+        private readonly ILogger<AuthService> _logger;
 
-
-        public AuthService(IUserRepository userRepository , IRoleRepository roleRepository , IJwtTokenGenerator jwtTokenGenerator)
+        public AuthService(IUserRepository userRepository , IRoleRepository roleRepository , IJwtTokenGenerator jwtTokenGenerator,ILogger<AuthService> logger)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
             _jwtTokenGenerator = jwtTokenGenerator;
+            _logger = logger;
         }
 
         public async Task<AuthResponseDto> RegisterUser(RegisterRequestDto registerRequestDto)
@@ -26,6 +27,7 @@ namespace HospitalManagement.Services
             var isUserExist = await    _userRepository.GetByEmailAsync(registerRequestDto.Email);
             if (isUserExist != null)
             {
+                _logger.LogError($"Email already exists  : {registerRequestDto.Email}");
                 return new AuthResponseDto { Success = false, Message = "Email already exists" };
 
             }
@@ -33,6 +35,7 @@ namespace HospitalManagement.Services
 
             if (role == null)
             {
+                _logger.LogError($"Role in inavlid: {registerRequestDto.Role}");
                 return new AuthResponseDto { Success = false, Message = "Invalid role" };
 
             }
@@ -46,6 +49,7 @@ namespace HospitalManagement.Services
                 Role =  role
             };
             await _userRepository.CreatUserAsync(user);
+            _logger.LogInformation($"user Registered Succefully {user.UserName} and role is {user.Role.RoleName}");
             return new AuthResponseDto { Success = true, Message = "user registered Succefully" , Role = user.Role.RoleName};
         }
 
@@ -56,6 +60,7 @@ namespace HospitalManagement.Services
                 User user =await   _userRepository.GetByEmailAsync(loginRequestDto.Email);
                 if (user == null)
                 {
+                    _logger.LogError($"\n==========\n Email  does not exists  : {loginRequestDto.Email}\n =============\n");
                     return new AuthResponseDto { Message ="invalid email" , Success=false};
                 }
                 user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(loginRequestDto.Password);
@@ -64,11 +69,12 @@ namespace HospitalManagement.Services
 
                 if (!isPasswordValid)
                 {
+                    _logger.LogError($"Password does not match");
                     return new AuthResponseDto { Message = "passowrd does not match", Success = false };
                 }
                var token =  _jwtTokenGenerator.GenerateJwtToken(user);
 
-
+                _logger.LogInformation($"\n========\n user Loin Succefully {user.UserName} and role is {user.Role} \n=============\n");
                 return new AuthResponseDto
                 {
                     Success = false,
@@ -78,7 +84,7 @@ namespace HospitalManagement.Services
                 };
             }catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                _logger.LogError($"exception Occurs : {ex.Message}");
                 return new AuthResponseDto { Success = false,   Message=ex.Message };   
             }
         }

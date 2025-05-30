@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HospitalManagement.Controllers
 {
-    [Authorize(Roles = "Admin ,Doctor ,Receptionist")]
+    //[Authorize(Roles = "Admin ,Doctor ,Receptionist")] 
     [Route("api/[controller]")]
     [ApiController]
     public class DoctorController : ControllerBase

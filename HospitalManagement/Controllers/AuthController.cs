@@ -1,4 +1,5 @@
 ﻿using HospitalManagement.DTO;
+using HospitalManagement.Helpers.Interface;
 using HospitalManagement.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -26,6 +27,7 @@ namespace HospitalManagement.Controllers
                 {
                     return NotFound(res);
                 }
+                //_logger.LogInformation($"User logged in succefully {res.Message}");
                 return Ok(res);
             }catch (Exception ex)
             {
@@ -41,8 +43,9 @@ namespace HospitalManagement.Controllers
             {
                 var res =await   _authService.LoginUserASync(loginRequestDto);
                 if(res == null)
-                {
-                    return NotFound(res);
+                {   
+                   
+                    return Unauthorized(res);
                 }
                 return Ok(res); 
             }catch (Exception ex)

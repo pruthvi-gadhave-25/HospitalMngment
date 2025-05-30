@@ -7,22 +7,32 @@ using HospitalManagement.Repository.Interface;
 using HospitalManagement.Services;
 using HospitalManagement.Services.Interface;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+//builder.WebHost.UseUrls("http://0.0.0.0:5000");
 
-builder.WebHost.ConfigureKestrel(serverOptions =>
-{
-    serverOptions.ListenAnyIP(80); // Not just localhost
-});
+//logging 
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .WriteTo.Console()
+    .WriteTo.File("Logs/hopitalmanagementLogs.txt")
+    .CreateLogger();
+
+//builder.Host.UseSerilog();
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers( options =>
+{
+    options.Filters.Add<LoggingActionFilter>();
+} );
     
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -54,6 +64,8 @@ builder.Services.AddScoped<IServiceLeaveManagement, LeaveService>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+//builder.Logging.SetMinimumLevel(LogLevel.Information);
+
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 
 // Configure JWT Authentication
@@ -75,8 +87,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 
-builder.Services.AddSwaggerGen(
-    c =>
+builder.Services.AddSwaggerGen( c =>
     {
         c.SwaggerDoc("v1", new OpenApiInfo
         {
@@ -105,9 +116,6 @@ builder.Services.AddSwaggerGen(
     });
     });
 
-
-   
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -117,7 +125,7 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
     app.UseSwaggerUI();
 }
 app.UseMiddleware<GlobalExceptionMiddleware>();
-app.UseHttpsRedirection();
+app.UseHttpsRedirection( );
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -125,3 +133,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+
+

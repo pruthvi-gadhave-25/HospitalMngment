@@ -7,6 +7,7 @@ using HospitalManagement.Models.Helpers;
 using HospitalManagement.Repository.Interface;
 using HospitalManagement.Services.Interface;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System.Numerics;
 
 namespace HospitalManagement.Services
@@ -15,23 +16,29 @@ namespace HospitalManagement.Services
     {   
         private readonly IDoctorRepository _repository;
         private readonly IDepartmentService _departmentService;
+        private readonly ILogger<DoctorService> _logger;
 
-        public DoctorService(IDoctorRepository doctorRepository , IDepartmentService departmentService)
+        public DoctorService(IDoctorRepository doctorRepository , IDepartmentService departmentService, ILogger<DoctorService> logger)
         {
             _repository = doctorRepository;
             _departmentService = departmentService;
+            _logger = logger;
         }
         public async Task<Result<Doctor>> AddDoctorAsync(AddDoctorDto doctorDto)
         {
-            
+
             if (doctorDto == null)
-                return Result<Doctor>.ErrorResult("Doctor is required" );
-
+            {
+                _logger.LogError("Doctor is required");
+                return Result<Doctor>.ErrorResult("Doctor is required");
+            }
             var resData = await _departmentService.GetDepartmentByIdAsync(doctorDto.DepartmentId);
-            
-            if (resData.IsSuccess == null)
-                return Result<Doctor>.ErrorResult("invalid department id");
 
+            if (resData.IsSuccess == null)
+            {
+                _logger.LogError("Invaid Dept id ");
+                return Result<Doctor>.ErrorResult("invalid department id");
+            }
             var doctor = new Doctor
             {
                 Name = doctorDto.Name,
@@ -42,7 +49,7 @@ namespace HospitalManagement.Services
             };
 
             var res =  await _repository.AddDoctorAsync(doctor);
-
+            _logger.LogInformation("Doctor added succefully");
             return Result<Doctor>.SuccessResult(res, "Doctor Added Succefully");
                                                           
         }
@@ -52,10 +59,12 @@ namespace HospitalManagement.Services
             var isIdExists = _repository.GetDoctorByIdAsync(id);
             if (isIdExists == null)
             {
+                _logger.LogError("Invalid dctor Id ");
             return Result<bool>.ErrorResult("invliad doctor Id ");
             }
             var res =  await _repository.DeleteDoctorAsync(id);
 
+            _logger.LogInformation("deleted Succefully ");
             return Result<bool>.SuccessResult(res, "Deleted succefully");
            
         }
@@ -65,6 +74,7 @@ namespace HospitalManagement.Services
               var doctors  = await _repository.GetAllDocotorsAsync();
                 if (doctors == null)
                 {
+                _logger.LogError("Doctors not found");
                     return Result<List<GetDoctorDto>>.ErrorResult("doctors not found");
                 }
                 var doctorDtos = doctors.Select(d => new GetDoctorDto
@@ -80,6 +90,8 @@ namespace HospitalManagement.Services
                         StartTime = slot.StartTime,
                     }).ToList() ?? new()
                 }).ToList();
+
+            _logger.LogInformation("doctor fetched succefully");
                 return  Result<List<GetDoctorDto>>.SuccessResult(doctorDtos ,"doctors fecthed successfully"); ;
             
         }
@@ -90,6 +102,7 @@ namespace HospitalManagement.Services
                     
             if(res == null)
             {
+                _logger.LogError("Invalid  Id ");
                 return Result<GetDoctorDto>.ErrorResult("invliad id ");
             }
             var resData = await _departmentService.GetDepartmentByIdAsync(res.DepartmentId) ;
@@ -108,6 +121,7 @@ namespace HospitalManagement.Services
                 }).ToList() ?? new()
                     
             };
+            _logger.LogInformation("fecthed succefully ");
             return Result<GetDoctorDto>.SuccessResult(doctor, "Fetched Succfully");
             
         }
@@ -119,7 +133,8 @@ namespace HospitalManagement.Services
 
                 if (existingDoctor == null)
                 {
-                    return Result<bool>.ErrorResult("doctor is invalid");
+                _logger.LogError("Invalid dctor Id ");
+                return Result<bool>.ErrorResult("doctor is invalid");
                 }                           
                     existingDoctor.Id = doctorDto.Id;
                     existingDoctor.Name = doctorDto.Name;
@@ -129,6 +144,7 @@ namespace HospitalManagement.Services
 
                var res =  await _repository.UpdateDoctorAsync(existingDoctor);
 
+            _logger.LogInformation("Updated Doctor ");
             return Result<bool>.SuccessResult(res, "Updated Succesfully");
 
 
@@ -140,7 +156,8 @@ namespace HospitalManagement.Services
                 var doctor = await _repository.GetDoctorByIdAsync(dto.DoctorId);
                 if (doctor == null)
                 {
-                    return Result<bool>.ErrorResult("invalid doctor id ");
+                _logger.LogError("Invalid dctor Id ");
+                return Result<bool>.ErrorResult("invalid doctor id ");
                 }
 
                 var exisitngSlots = await GetBySlotDoctorIdAsync(dto.DoctorId);
@@ -154,9 +171,11 @@ namespace HospitalManagement.Services
                 )
                 );
 
-                if (isOverlapping)
-                    return Result<bool>.ErrorResult("Could not add availability slot. It might be overlapping or invalid.");
-
+            if (isOverlapping)
+            {
+                _logger.LogError("Could not add availability slot. It might be overlapping");
+                return Result<bool>.ErrorResult("Could not add availability slot. It might be overlapping or invalid.");
+            }
 
                 var slot = new AvailabilitySlot
                 {
@@ -166,6 +185,7 @@ namespace HospitalManagement.Services
                     EndTime = dto.EndTime
                 };
                var res =  await _repository.CreateAvaialbiltySlotAsync(slot);
+            _logger.LogInformation("slot added succefully");
                 return Result<bool>.SuccessResult(res, "slot added succfully");
             
         }
@@ -175,6 +195,7 @@ namespace HospitalManagement.Services
             var isValidDoctor =await _repository.GetDoctorByIdAsync(doctorId);
             if(isValidDoctor == null)
             {
+                _logger.LogError("Invalid dctor Id ");
                 return Result<List<GetAvailabilitySlotDto>>.ErrorResult("invlid doctor id ");
             }
                 var res =  await _repository.GetBySlotDoctorIdAsync(doctorId);
@@ -188,8 +209,10 @@ namespace HospitalManagement.Services
 
             if(res.Count == 0)
             {
+                _logger.LogError("No slots found ");
                 return Result<List<GetAvailabilitySlotDto>>.SuccessResult(avaialbalitySlotsDto, $"no avalibility slot found for {doctorId}");
             }
+            _logger.LogInformation("availability slot fetche succefully");
             return Result<List<GetAvailabilitySlotDto>>.SuccessResult(avaialbalitySlotsDto, "avalibilty slot fetched succfully");
            
         }

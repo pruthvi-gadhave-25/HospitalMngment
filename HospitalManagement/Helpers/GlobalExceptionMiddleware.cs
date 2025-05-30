@@ -8,8 +8,7 @@ namespace HospitalManagement.Helpers
     {
 
        private readonly RequestDelegate _requestDelegate;
-
-        public GlobalExceptionMiddleware(RequestDelegate requestDelegate)
+        public GlobalExceptionMiddleware(RequestDelegate requestDelegate )
         {
             _requestDelegate = requestDelegate;
         }
@@ -23,6 +22,8 @@ namespace HospitalManagement.Helpers
             }
             catch (Exception ex)
             {
+              
+                   
                 await HandleExceptionAsync(context, ex);
             }
         }
@@ -43,6 +44,6 @@ namespace HospitalManagement.Helpers
             var res = JsonConvert.SerializeObject(errorResponse);
             await context.Response.WriteAsync(res); 
         }
-
+       
     }
 }

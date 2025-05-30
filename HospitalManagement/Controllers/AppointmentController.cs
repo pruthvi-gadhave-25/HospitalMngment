@@ -60,7 +60,7 @@ namespace HospitalManagement.Controllers
 
 
 
-        [HttpGet]
+        [HttpGet("get/appointmets")]
         public async Task<IActionResult> GetAppointments()
         {
             var appointments = await _appointmentService.GetAppointmentAsync();
