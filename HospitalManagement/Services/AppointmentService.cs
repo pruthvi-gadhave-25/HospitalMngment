@@ -51,7 +51,6 @@ namespace HospitalManagement.Services
             var appointTime = appointmentDto.AppointmentTime;
             var appointDay = appointmentDto.AppointmentDate.DayOfWeek;
 
-
             var isSlotAvailable = slots.Data.Any(slot =>
             slot.DayofWeek == appointDay &&
             slot.StartTime <= appointTime && 
@@ -79,7 +78,7 @@ namespace HospitalManagement.Services
 
                var res =  await _appointmentRepository.BookAppointment(appointment);
             if(res)
-            {
+            { 
 
                 var emailData = new MailRequest()
                 {

@@ -7,12 +7,15 @@ namespace HospitalManagement.Helpers
     public class GlobalExceptionMiddleware
     {
 
-       private readonly RequestDelegate _requestDelegate;
-        public GlobalExceptionMiddleware(RequestDelegate requestDelegate )
+        private readonly RequestDelegate _requestDelegate;
+        private readonly ILogger<GlobalExceptionMiddleware> _logger;
+        public GlobalExceptionMiddleware(RequestDelegate requestDelegate,
+                ILogger<GlobalExceptionMiddleware> logger
+            )
         {
             _requestDelegate = requestDelegate;
+            _logger = logger;
         }
-
 
         public async Task InvokeAsync(HttpContext context)
         {
@@ -22,8 +25,7 @@ namespace HospitalManagement.Helpers
             }
             catch (Exception ex)
             {
-              
-                   
+                _logger.LogError($"Exception Occurs : {ex.Message}");
                 await HandleExceptionAsync(context, ex);
             }
         }

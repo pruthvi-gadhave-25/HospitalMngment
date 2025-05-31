@@ -87,8 +87,6 @@ namespace HospitalManagement.Controllers
                 return ApiResponseHelper.CreateSuccess(res.Data, res.Message);
 
         }
-
-
         
         [HttpGet("get/doctor/{id}")]
         public async Task<IActionResult> GetDoctorByIdAsync(int id)
@@ -106,7 +104,7 @@ namespace HospitalManagement.Controllers
         [HttpGet("avalibalitySlots/{doctorId}")]
         public async Task<IActionResult> GetAvailabilityByDoctorId(int doctorId)
         {
-                var slots = await _service.GetBySlotDoctorIdAsync(doctorId);
+            var slots = await _service.GetBySlotDoctorIdAsync(doctorId);
                 
             if(slots.Data.Count == 0)
             {

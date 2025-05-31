@@ -57,10 +57,10 @@ namespace HospitalManagement.Repository
             {
                 var appointments = await _context.Appointments
                     .Include(d => d.Doctor)
-                    .ThenInclude( d => d.Department)
-                    .Include(p =>p.Patient)
+                    .ThenInclude(d => d.Department)
+                    .Include(p => p.Patient)
                     .ToListAsync();
-
+             
                 return appointments ?? new List<Appointment>();
             }
             catch (Exception ex)
