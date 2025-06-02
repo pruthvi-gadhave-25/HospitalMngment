@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HospitalManagement.Controllers
 {
-    [Authorize(Roles = "Admin, Receptionist")]
+    //[Authorize(Roles = "Admin, Receptionist")]
     [Route("api/[controller]")]
     [ApiController]
     public class PatientController : ControllerBase
@@ -20,7 +20,7 @@ namespace HospitalManagement.Controllers
             _patientService = patientService;
         }
 
-        [Authorize(Roles = "Doctor")]
+        //[Authorize(Roles = "Doctor")]
         [HttpGet("get/patients")]
         public async Task<IActionResult> GetPatients()
         {
@@ -42,7 +42,7 @@ namespace HospitalManagement.Controllers
             }
         }
 
-        [Authorize(Roles = "Doctor")]
+        //[Authorize(Roles = "Doctor")]
         [HttpGet("get/patient/{id}")]
         public async Task<IActionResult> GetPatientById(int id)
         {

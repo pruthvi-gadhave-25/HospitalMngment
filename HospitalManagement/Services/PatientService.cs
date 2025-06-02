@@ -1,22 +1,32 @@
 ﻿using Azure;
+using HospitalManagement.Data;
 using HospitalManagement.DTO;
 using HospitalManagement.Helpers;
+using HospitalManagement.Interface;
 using HospitalManagement.Models;
 using HospitalManagement.Repository.Interface;
 using HospitalManagement.Services.Interface;
+using Microsoft.EntityFrameworkCore;
 
 namespace HospitalManagement.Services
 {
     public class PatientService : IPatientService
     {   
         private readonly IPatientRepository _patientRepository;
-
-        public PatientService(IPatientRepository patientRepo)
+        private readonly IRepository<Patient> _repository;
+        private readonly AppDbContext _appDbContext;
+        public PatientService(IPatientRepository patientRepo ,
+            IRepository<Patient> repository
+            , AppDbContext appDbContext
+            )
         {
             _patientRepository = patientRepo;
+            _repository = repository;
+            _appDbContext = appDbContext;
         }
         public async Task<bool> AddPatientAsync(PatientAddDto patientDto)
         {
+           
             try
             {
                if(patientDto == null)
@@ -25,16 +35,16 @@ namespace HospitalManagement.Services
                 }
 
                 var patient = new Patient
-
                 { 
                     Name = patientDto.Name,
                     Email = patientDto.Email,
                     Mobile = patientDto.Mobile,
                     Gender = patientDto.Gender,
                     Dob = patientDto.Dob
-                };
-                var res = await _patientRepository.AddPatientAsync(patient);
-                return res;
+                };                
+               await _repository.Add(patient);
+               await _repository.SaveAsync();
+                return true;
 
             }catch (Exception ex)
             {
@@ -48,7 +58,15 @@ namespace HospitalManagement.Services
             {
                 return null;
             }
-            var res = await _patientRepository.GetPatientByIdAsync(id);
+            //var res = await _patientRepository.GetPatientByIdAsync(id);
+
+            var res = await _appDbContext.Patients
+                  .AsNoTracking()
+                .Include(a => a.Appointments)
+                .ThenInclude(a => a.Doctor)
+                .ThenInclude(p => p.Department)
+                .FirstOrDefaultAsync(p => p.Id == id);       //calling related entries here /chaged beacuse          
+            //var res = await _repository.GetById(id); //new generic repos
             if(res  == null)
             {
                 return Result<GetPatientDto>.ErrorResult("patient not found");
@@ -77,7 +95,12 @@ namespace HospitalManagement.Services
         {
             try{ 
                            
-                var res = await _patientRepository.GetPatientsAsync();
+                var res =  await _appDbContext.Patients
+                    .AsNoTracking()
+                    .Include(a => a.Appointments)
+                    .ThenInclude(d => d.Doctor)
+                    .ThenInclude(d => d.Department)
+                    .ToListAsync();
                 var patients =res.Select( p => new GetPatientDto
                 {
                     Id =p.Id,
@@ -108,10 +131,26 @@ namespace HospitalManagement.Services
             }
         }
 
-        public Task<List<Patient>> SearchPatientsAsync(string?  name, string? email, string? mobile)
+        public Task<List<Patient>> SearchPatientsAsync(string?  name, string? email, string? mobileNo)
         {
             try{
-                return _patientRepository.SearchPatientAsync(name, email, mobile);
+                var query = _appDbContext.Patients.AsQueryable();
+
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    query = query.Where(c => c.Name.Contains(name));
+                }
+                if (!string.IsNullOrWhiteSpace(mobileNo))
+                {
+                    query = query.Where(c => c.Mobile.Contains(mobileNo));
+                }
+                if (!string.IsNullOrWhiteSpace(email))
+                {
+                    query = query.Where(c => c.Email.Contains(email));
+                }
+                var res = query.ToListAsync();
+                return res;
+                //return _patientRepository.SearchPatientAsync(name, email, mobileNo);
             }catch(Exception ex)
             {
                 return null;

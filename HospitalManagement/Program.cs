@@ -1,6 +1,7 @@
 using HospitalManagement.Data;
 using HospitalManagement.Helpers;
 using HospitalManagement.Helpers.Interface;
+using HospitalManagement.Interface;
 using HospitalManagement.Models.Mails;
 using HospitalManagement.Repository;
 using HospitalManagement.Repository.Interface;
@@ -40,7 +41,8 @@ builder.Services.AddSwaggerGen();
 string connetionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connetionString));
 
-
+builder.Services.AddScoped(typeof(IRepository<>) , typeof(GenericRepository<>));
+//builder.Services.AddScoped<>
 builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings")); ;
 builder.Services.AddTransient<IEmailService, EmailSendService>();
 
@@ -62,6 +64,8 @@ builder.Services.AddScoped<IServiceLeaveManagement, LeaveService>();
 
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+
 
 //builder.Logging.SetMinimumLevel(LogLevel.Information);
 
