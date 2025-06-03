@@ -5,55 +5,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HospitalManagement.Repository
 {
-    public class UserRepository : IUserRepository
+    public class UserRepository : GenericRepository<User>, IUserRepository
     {
-        private readonly AppDbContext _context;
-
-        public UserRepository(AppDbContext appDbContext)
+        public UserRepository(AppDbContext appDbContext) : base(appDbContext)
         {
-            _context = appDbContext;
+          
         }
-
-        public async Task<bool> CreatUserAsync(User user)
-        {
-            var res =  await _context.Users.AddAsync(user);
-            await _context.SaveChangesAsync();
-           if(res == null)
-            {
-                return false;
-            }
-           return  true;
-        }
-
-        public async Task<User> GetByEmailAsync(string email)
-        {
-            try
-            {
-                var user = await _context.Users
-                    .Include(r => r.Role)
-                    .FirstOrDefaultAsync(u => u.Email == email);
-
-                if (user == null)
-                {
-                    return null;
-                }
-                return user;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return null;
-            }
-        }
-
+       
         public async Task<List<User>> GetUsersAsync()
         {
-           var res = await  _context.Users.ToListAsync();
-            
-            if(res == null)
-            {
-                return null;
-            }
+            //var res = await (from s in appDbContext.Users
+            //                 select new
+            //                 {
+            //                     s.Id,
+            //                     s.Email
+            //                 }).ToListAsync(); //use this  when return specific data only            
+            var res =  await _appDbContext.Users
+                .Include(s =>s.Role)
+                .ToListAsync();                
 
             return res;
         }

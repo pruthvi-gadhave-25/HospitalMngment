@@ -8,14 +8,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HospitalManagement.Repository
 {
-    public class DoctorRepository : IDoctorRepository
+    public class DoctorRepository : GenericRepository<Doctor> , IDoctorRepository
     {   
-        private readonly AppDbContext _context;
-
-
-        public DoctorRepository(AppDbContext appDbContext)
-        {
-            _context = appDbContext;
+     
+        public DoctorRepository(AppDbContext appDbContext) : base(appDbContext) 
+        {        
+           
         }
         public async Task<Doctor?> AddDoctorAsync(Doctor doctor)
         {
@@ -25,9 +23,9 @@ namespace HospitalManagement.Repository
                 {
                     return null;
                 }
-                var res = await _context.Doctors.AddAsync(doctor);
+                var res = await _appDbContext.Doctors.AddAsync(doctor);
 
-                await _context.SaveChangesAsync();
+                await _appDbContext.SaveChangesAsync();
                 return res.Entity;
 
             }
@@ -44,14 +42,14 @@ namespace HospitalManagement.Repository
         {
             try
             {
-                var doctor = await _context.Doctors.FirstOrDefaultAsync(p => p.Id == id);
+                var doctor = await _appDbContext.Doctors.FirstOrDefaultAsync(p => p.Id == id);
 
                 if (doctor == null)
                 {
                     return false;
                 }
-                var res = _context.Doctors.Remove(doctor);
-                await _context.SaveChangesAsync();
+                var res = _appDbContext.Doctors.Remove(doctor);
+                await _appDbContext.SaveChangesAsync();
                 return true;
             }
             catch (Exception ex)
@@ -65,7 +63,7 @@ namespace HospitalManagement.Repository
         {
             try
             {
-                var doctors = await _context.Doctors.
+                var doctors = await _appDbContext.Doctors.
                      Include(d => d.Department)
                     .Include(a => a.AvailabilitySlots)
                     .ToListAsync();
@@ -79,14 +77,12 @@ namespace HospitalManagement.Repository
                 return new List<Doctor>();
             }
         }
-
-       
-
+      
         public async Task<Doctor?> GetDoctorByIdAsync(int id)
         {
             try
             {
-                var doctor = await _context.Doctors.
+                var doctor = await _appDbContext.Doctors.
                     Include(d => d.Department)
                     .Include( a => a.AvailabilitySlots)
                     .FirstOrDefaultAsync( d  => d.Id == id);
@@ -106,8 +102,8 @@ namespace HospitalManagement.Repository
         {
             try
             {
-                _context.Doctors.Update(doctor);
-                await _context.SaveChangesAsync();
+                _appDbContext.Doctors.Update(doctor);
+                await _appDbContext.SaveChangesAsync();
                 return true;
             }
             catch (Exception e)
@@ -122,8 +118,8 @@ namespace HospitalManagement.Repository
         {
             try
             {
-                await _context.AvailabilitySlots.AddAsync(slot);
-                await _context.SaveChangesAsync();
+                await _appDbContext.AvailabilitySlots.AddAsync(slot);
+                await _appDbContext.SaveChangesAsync();
                 return true;
             }catch (Exception ex)
             {
@@ -137,7 +133,7 @@ namespace HospitalManagement.Repository
             try
             {
            
-             var res =  await _context.AvailabilitySlots.Where(d => d.DoctorId == doctorId).ToListAsync();                
+             var res =  await _appDbContext.AvailabilitySlots.Where(d => d.DoctorId == doctorId).ToListAsync();                
                 return res;
             }
             catch (Exception ex)

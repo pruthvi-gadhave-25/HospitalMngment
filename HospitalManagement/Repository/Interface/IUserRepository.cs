@@ -6,9 +6,9 @@ namespace HospitalManagement.Repository.Interface
 {
     public interface IUserRepository
     {
-        Task<User> GetByEmailAsync(string email);
-        Task<bool> CreatUserAsync(User user);
-        Task<List<User>> GetUsersAsync();
+        //Task<User> GetByEmailAsync(string email);
+        //Task<bool> CreatUserAsync(User user);
+        //Task<List<User>> GetUsersAsync();
 
 
     }

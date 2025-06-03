@@ -4,32 +4,27 @@ using HospitalManagement.DTO;
 using HospitalManagement.Helpers;
 using HospitalManagement.Interface;
 using HospitalManagement.Models;
+using HospitalManagement.Repository;
 using HospitalManagement.Repository.Interface;
 using HospitalManagement.Services.Interface;
 using Microsoft.EntityFrameworkCore;
 
 namespace HospitalManagement.Services
 {
-    public class PatientService : IPatientService
-    {   
-        private readonly IPatientRepository _patientRepository;
-        private readonly IRepository<Patient> _repository;
-        private readonly AppDbContext _appDbContext;
-        public PatientService(IPatientRepository patientRepo ,
-            IRepository<Patient> repository
-            , AppDbContext appDbContext
-            )
+    public class PatientService :  IPatientService
+    {
+        private readonly PatientRepository _patientRepo;
+        private readonly ILogger<LoggingActionFilter> _logger;
+        public PatientService(PatientRepository patientRepository  ,ILogger<LoggingActionFilter> logger )
         {
-            _patientRepository = patientRepo;
-            _repository = repository;
-            _appDbContext = appDbContext;
+            _patientRepo = patientRepository;
+            _logger = logger;
         }
         public async Task<bool> AddPatientAsync(PatientAddDto patientDto)
-        {
-           
+        {           
             try
             {
-               if(patientDto == null)
+                if(patientDto == null)
                 {
                     return false;
                 }
@@ -42,12 +37,13 @@ namespace HospitalManagement.Services
                     Gender = patientDto.Gender,
                     Dob = patientDto.Dob
                 };                
-               await _repository.Add(patient);
-               await _repository.SaveAsync();
+               await _patientRepo.Add(patient);
+               await _patientRepo.SaveAsync();
                 return true;
 
             }catch (Exception ex)
             {
+                _logger.LogError($"error occured {ex.Message}");
                 return false;
             }
         }
@@ -58,15 +54,8 @@ namespace HospitalManagement.Services
             {
                 return null;
             }
-            //var res = await _patientRepository.GetPatientByIdAsync(id);
-
-            var res = await _appDbContext.Patients
-                  .AsNoTracking()
-                .Include(a => a.Appointments)
-                .ThenInclude(a => a.Doctor)
-                .ThenInclude(p => p.Department)
-                .FirstOrDefaultAsync(p => p.Id == id);       //calling related entries here /chaged beacuse          
-            //var res = await _repository.GetById(id); //new generic repos
+            var res = await _patientRepo.GetPatientByIdAsync(id);     // get realted data
+                   
             if(res  == null)
             {
                 return Result<GetPatientDto>.ErrorResult("patient not found");
@@ -93,14 +82,8 @@ namespace HospitalManagement.Services
 
         public async  Task<List<GetPatientDto>> GetPatientsAsync()
         {
-            try{ 
-                           
-                var res =  await _appDbContext.Patients
-                    .AsNoTracking()
-                    .Include(a => a.Appointments)
-                    .ThenInclude(d => d.Doctor)
-                    .ThenInclude(d => d.Department)
-                    .ToListAsync();
+            try{                            
+                var res =  await _patientRepo.GetPatientsAsync();
                 var patients =res.Select( p => new GetPatientDto
                 {
                     Id =p.Id,
@@ -127,33 +110,22 @@ namespace HospitalManagement.Services
             }
             catch (Exception ex)
             {
+                _logger.LogError($"Error Occured {ex.Message}");
                 return  null;
             }
         }
 
-        public Task<List<Patient>> SearchPatientsAsync(string?  name, string? email, string? mobileNo)
+        public async Task<List<Patient>> SearchPatientsAsync(string?  name, string? email, string? mobileNo)
         {
             try{
-                var query = _appDbContext.Patients.AsQueryable();
-
-                if (!string.IsNullOrWhiteSpace(name))
-                {
-                    query = query.Where(c => c.Name.Contains(name));
-                }
-                if (!string.IsNullOrWhiteSpace(mobileNo))
-                {
-                    query = query.Where(c => c.Mobile.Contains(mobileNo));
-                }
-                if (!string.IsNullOrWhiteSpace(email))
-                {
-                    query = query.Where(c => c.Email.Contains(email));
-                }
-                var res = query.ToListAsync();
+               var res =  await _patientRepo.SearchPatientAsync(name, email, mobileNo);
+               
                 return res;
-                //return _patientRepository.SearchPatientAsync(name, email, mobileNo);
+               
             }catch(Exception ex)
             {
-                return null;
+                _logger.LogError($"Error occured {ex.Message}");
+                return  new List<Patient>();
             }
         }
     }

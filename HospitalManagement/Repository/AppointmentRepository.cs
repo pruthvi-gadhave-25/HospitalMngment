@@ -9,20 +9,19 @@ using System.Numerics;
 
 namespace HospitalManagement.Repository
 {
-    public class AppointmentRepository : IAppointmentRepository
+    public class AppointmentRepository : GenericRepository<Appointment> , IAppointmentRepository
     {
-        private readonly AppDbContext _context;
-
-        public AppointmentRepository(AppDbContext context)
+        
+        public AppointmentRepository(AppDbContext context) :base(context)
         {
-            _context = context;
+           
         }
         public async Task<bool> BookAppointment(Appointment appointment)
         {
             try
             {
-                var res = await _context.AddAsync(appointment);
-                await _context.SaveChangesAsync();
+                var res = await _appDbContext.AddAsync(appointment);
+                await _appDbContext.SaveChangesAsync();
                 return true;
 
             }catch(Exception ex)
@@ -36,13 +35,13 @@ namespace HospitalManagement.Repository
         {
             try
             {   
-              var appointment=   await _context.Appointments.FindAsync(  appointmentId );
+              var appointment=   await _appDbContext.Appointments.FindAsync(  appointmentId );
                 if (appointment == null)
                 {
                     return false;
                 }
-                _context.Appointments.Remove(appointment);
-                await _context.SaveChangesAsync();
+                _appDbContext.Appointments.Remove(appointment);
+                await _appDbContext.SaveChangesAsync();
                 return true;
             }catch (Exception ex)
             {
@@ -55,7 +54,7 @@ namespace HospitalManagement.Repository
         {
             try
             {
-                var appointments = await _context.Appointments
+                var appointments = await _appDbContext.Appointments
                     .Include(d => d.Doctor)
                     .ThenInclude(d => d.Department)
                     .Include(p => p.Patient)
@@ -75,7 +74,7 @@ namespace HospitalManagement.Repository
         {
             try
             {
-                var  appointments =await   _context.Appointments
+                var  appointments =await   _appDbContext.Appointments
                     .Include( d => d.Doctor)
                     .ThenInclude( d=> d.Department)
                     .Where(a => a.DoctorId == doctorId).ToListAsync();
@@ -96,7 +95,7 @@ namespace HospitalManagement.Repository
         {
             try
             {
-                var appointments = await _context.Appointments
+                var appointments = await _appDbContext.Appointments
                     .Include(d => d.Doctor)
                     .ThenInclude(d => d.Department)
                     .Where(a => a.AppointmentDate == date).ToListAsync();
@@ -113,27 +112,13 @@ namespace HospitalManagement.Repository
             }
         }
 
-        public Task<Appointment> GetAppointmentAsync(int id)
-        {
-            try
-            {
-                var appointment =  _context.Appointments.FirstOrDefaultAsync( p => p.Id == id );
-                if (appointment == null)
-                    return null;
-
-                return appointment;
-            }catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return null;
-            }
-        }
+     
 
         public async Task<bool> RescheduleAppointment(int appointmentId, DateTime newDate, TimeOnly newTime)
         {
             try
             {
-                var appointment = await _context.Appointments.FindAsync(appointmentId);
+                var appointment = await _appDbContext.Appointments.FindAsync(appointmentId);
                 if(appointment == null)
                 {
                     return false;
@@ -141,8 +126,8 @@ namespace HospitalManagement.Repository
                 appointment.AppointmentDate = newDate;
                 appointment.AppointmentTime = newTime;
 
-                 _context.Appointments.Update(appointment);
-                await _context.SaveChangesAsync();
+                 _appDbContext.Appointments.Update(appointment);
+                await _appDbContext.SaveChangesAsync();
                 return true;
             }
             catch (Exception ex)
@@ -159,7 +144,7 @@ namespace HospitalManagement.Repository
                
                 var skip = (pageIndex - 1) * pageSize;
 
-                var apppointments = await _context.Appointments
+                    var apppointments = await _appDbContext.Appointments
                     .Include(d => d.Doctor)
                     .ThenInclude(d => d.Department)
                     .Where(d => d.DoctorId == doctorId && d.AppointmentDate == date)
@@ -173,18 +158,6 @@ namespace HospitalManagement.Repository
                     return null;
                 }
                 return apppointments;
-                var appointments = await _context.Appointments
-                    .AsNoTracking()
-                    .Include(d => d.Doctor)
-                    .ThenInclude(d => d.Department)
-                    .Where(a => a.DoctorId == doctorId  && a.AppointmentDate == date )
-                    .Skip( (pageIndex -1)* pageSize )
-                    .ToListAsync();
-
-                if (appointments == null)
-                    return null;
-
-                return appointments;
             }
             catch (Exception ex)
             {
@@ -199,7 +172,7 @@ namespace HospitalManagement.Repository
             {   
                 var skip = (pageIndex -1 ) * pageSize;  
 
-                var apppointments =  await _context.Appointments
+                var apppointments =  await _appDbContext.Appointments
                     .Include(d => d.Doctor)
                     .ThenInclude(d => d.Department)
                     .Where( d => d.Doctor.DepartmentId ==  departmentId && d.AppointmentDate ==  date)
@@ -225,13 +198,13 @@ namespace HospitalManagement.Repository
         {
             try
             {   
-                var appointment = await _context.Appointments.FirstOrDefaultAsync(d => d.Id == appointmentId);  
+                var appointment = await _appDbContext.Appointments.FirstOrDefaultAsync(d => d.Id == appointmentId);  
                 if(appointment == null)
                 {
                     return false;
                 }
-                _context.Appointments.Update(appointment);
-                await _context.SaveChangesAsync();
+                _appDbContext.Appointments.Update(appointment);
+                await _appDbContext.SaveChangesAsync();
                 return true;
             }catch(Exception ex)
             {
@@ -244,7 +217,7 @@ namespace HospitalManagement.Repository
         {
             try
             {                   
-                 var appointments =await   _context.Appointments
+                 var appointments =await   _appDbContext.Appointments
                     .Where(p => p.PatientID == patientId && p.Status == Helpers.AppointmentStatus.Completed )                   
                     .AsNoTracking()
                     .ToListAsync();

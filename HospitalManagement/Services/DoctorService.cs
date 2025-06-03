@@ -4,6 +4,7 @@ using HospitalManagement.Helpers;
 using HospitalManagement.Migrations;
 using HospitalManagement.Models;
 using HospitalManagement.Models.Helpers;
+using HospitalManagement.Repository;
 using HospitalManagement.Repository.Interface;
 using HospitalManagement.Services.Interface;
 using Microsoft.EntityFrameworkCore;
@@ -14,14 +15,15 @@ namespace HospitalManagement.Services
 {
     public class DoctorService : IDoctorService
     {   
-        private readonly IDoctorRepository _repository;
-        private readonly IDepartmentService _departmentService;
+        private readonly DoctorRepository _repository;
+        //private readonly IDepartmentService _departmentService;
         private readonly ILogger<DoctorService> _logger;
 
-        public DoctorService(IDoctorRepository doctorRepository , IDepartmentService departmentService, ILogger<DoctorService> logger)
+        private readonly DoctorRepository doctorRepository; 
+
+        public DoctorService(DoctorRepository doctorRepository , ILogger<DoctorService> logger)
         {
             _repository = doctorRepository;
-            _departmentService = departmentService;
             _logger = logger;
         }
         public async Task<Result<Doctor>> AddDoctorAsync(AddDoctorDto doctorDto)

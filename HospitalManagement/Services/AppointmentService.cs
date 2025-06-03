@@ -1,57 +1,64 @@
-﻿using HospitalManagement.DTO;
+﻿using HospitalManagement.Data;
+using HospitalManagement.DTO;
 using HospitalManagement.Helpers;
+using HospitalManagement.Interface;
 using HospitalManagement.Models;
 using HospitalManagement.Models.Mails;
+using HospitalManagement.Repository;
 using HospitalManagement.Repository.Interface;
 using HospitalManagement.Services.Interface;
 
 namespace HospitalManagement.Services
 {
-    public class AppointmentService : IAppointmentService
+    public class AppointmentService :  IAppointmentService
     {
-        private readonly IAppointmentRepository _appointmentRepository;
-        private readonly IPatientService _patientService;
-        private readonly IDoctorService _doctorService;
-        private readonly ILeaveRepository _leaveRspository;
+       
+        private readonly AppointmentRepository _appointmentRepository;
+        private readonly DoctorRepository _doctorRepository;
+        private readonly PatientRepository _patientRepository;
+        private readonly LeaveManagementRepository _leaveRepo;
+        private readonly DepartmentRepository _departmentRepos;
         private readonly IEmailService _emailService;
-        private readonly IDepartmentService _departmentService;
 
-        public AppointmentService(IAppointmentRepository appointmentRepository,
-            IPatientService patientService,
-            IDoctorService doctorService,
-            ILeaveRepository leaveRepository,
-            IEmailService emailService
-            ,IDepartmentService departmentService
+        public AppointmentService(
+            AppointmentRepository appointmentRepository,
+            DoctorRepository doctorRepository,
+            PatientRepository patientRepository,
+            LeaveManagementRepository leaveManagementRepository,
+            IEmailService emailService,
+            DepartmentRepository departmentRepository
             )
         {
             _appointmentRepository = appointmentRepository;
-            _patientService = patientService;
-            _doctorService = doctorService;
-            _leaveRspository = leaveRepository;
+            _doctorRepository = doctorRepository;
+            _patientRepository = patientRepository;
+            _leaveRepo = leaveManagementRepository;
             _emailService = emailService;
-            _departmentService = departmentService;
+            _departmentRepos = departmentRepository;
         }
 
         public async  Task<Result<bool>> BookAppointment(BookAppointmentDto appointmentDto)
         {
-            var patient =  await _patientService.GetPatientByIdAsync(appointmentDto.PatientID);
-               
-            var doctor = await _doctorService.GetDoctorByIdAsync(appointmentDto.DoctorId);
+            var patient =  await _patientRepository.GetById(appointmentDto.PatientID);
+            //var patient1 = await _patientRpos.GetById(appointmentDto.PatientID);
+
+            var doctor = await _doctorRepository.GetById(appointmentDto.DoctorId);
+
 
             if ((patient == null) || (doctor == null))
                 return Result<bool>.ErrorResult("patient or doctor is invalid");
 
-            var isDoctorOnLeave = await _leaveRspository.IsDoctorOnLeaveAsync(appointmentDto.DoctorId , appointmentDto.AppointmentDate);
+            var isDoctorOnLeave = await _leaveRepo.IsDoctorOnLeaveAsync(appointmentDto.DoctorId , appointmentDto.AppointmentDate);
             if (isDoctorOnLeave)
             {
                 return Result<bool>.ErrorResult("docotr is on leave");
             }
         
-            var slots = await _doctorService.GetBySlotDoctorIdAsync(appointmentDto.DoctorId);
+            var slots = await _doctorRepository.GetBySlotDoctorIdAsync(appointmentDto.DoctorId);
             var appointTime = appointmentDto.AppointmentTime;
             var appointDay = appointmentDto.AppointmentDate.DayOfWeek;
 
-            var isSlotAvailable = slots.Data.Any(slot =>
+            var isSlotAvailable = slots.Any(slot =>
             slot.DayofWeek == appointDay &&
             slot.StartTime <= appointTime && 
             appointTime < slot.EndTime
@@ -99,7 +106,7 @@ namespace HospitalManagement.Services
 
         public async Task<Result<bool>> RescheduleAppointmentAsync(RescheduleAppointmentDto dto)
         {
-            var appointment = await _appointmentRepository.GetAppointmentAsync(dto.AppointmentId);
+            var appointment = await _appointmentRepository.GetById(dto.AppointmentId);
             if (appointment == null)
                 return Result<bool>.ErrorResult("appointmentId  is invlaid");
 
@@ -135,7 +142,7 @@ namespace HospitalManagement.Services
 
         public async Task<Result<List<GetAppointmentsDto>>> GetAppointmentAsync()
         {
-                var res = await _appointmentRepository.GetAllAppointmentAsync();
+                var res = await _appointmentRepository.GetAll();
 
             var appointmentDto = res.Select(s => new GetAppointmentsDto
             {
@@ -172,9 +179,7 @@ namespace HospitalManagement.Services
                 DepartmentName = s.Doctor?.Department?.Name ?? "N/a"
             }).ToList();
 
-                
-
-                return  Result<List<GetAppointmentsDto>>.SuccessResult(appointmentDto, "appointments");            
+            return  Result<List<GetAppointmentsDto>>.SuccessResult(appointmentDto, "appointments");            
         }
 
         public async  Task<Result<List<GetAppointmentsDto>>> GetAppointmentBtDoctorAsync(int doctorId)
@@ -201,7 +206,7 @@ namespace HospitalManagement.Services
 
         public async Task<Result<List<GetAppointmentsDto>>> GetDailyAppointmentByDepartmentAsync(int departmentId, DateTime date, int pageIndex, int pageSize)
         {
-           var department = await  _departmentService.GetDepartmentByIdAsync(departmentId);
+           var department = await  _departmentRepos.GetById(departmentId);
             if (department == null)
                 return Result<List<GetAppointmentsDto>>.ErrorResult("deprtmentId is  not valid ");
 
@@ -226,7 +231,7 @@ namespace HospitalManagement.Services
 
         public async Task<Result<List<GetAppointmentsDto>>> GetDailyAppointmentByDocotorAsync(int doctorId, DateTime date, int pageIndex, int pageSize)
         {
-            var doctor = await _doctorService.GetDoctorByIdAsync(doctorId);
+            var doctor = await _doctorRepository.GetById(doctorId);
             if (doctor == null)
                 return Result<List<GetAppointmentsDto>>.ErrorResult("docotr id is not valid ");
 
@@ -251,7 +256,7 @@ namespace HospitalManagement.Services
 
         public async Task<Result<bool>> UpdateAppointmentStatus(int appointmentId)
         {
-            var appointment = await  _appointmentRepository.GetAppointmentAsync(appointmentId);
+            var appointment = await  _appointmentRepository.GetById(appointmentId);
             if (appointment == null)
             {
                 return Result<bool>.ErrorResult("Appointment not found.");

@@ -6,6 +6,7 @@ namespace HospitalManagement.Services.Interface
 {
     public interface IAppointmentService
     {   
+        
         Task <Result<bool>> BookAppointment(BookAppointmentDto appointmentDto);
         Task<Result<bool>> CancelApppointment(int appointmentId);
         Task<Result<bool>> RescheduleApppointment(RescheduleAppointmentDto rescheduleAppointmentDto);

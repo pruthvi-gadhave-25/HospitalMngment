@@ -9,27 +9,29 @@ namespace HospitalManagement.Repository
     public class GenericRepository<T> : IRepository<T> where T : class
     {
 
-        private readonly AppDbContext _context;
-        private readonly DbSet<T>   _dbSet;
+        protected AppDbContext _appDbContext;
+        private readonly DbSet<T> _dbSet;
 
         public GenericRepository(AppDbContext context)
         {
-            _context = context;
-            _dbSet = _context.Set<T>();
+            _appDbContext = context;
+            _dbSet = _appDbContext.Set<T>();
         }
-        public async Task Add(T e)
+        public async Task<bool> Add(T e)
         {
-            await _dbSet.AddAsync(e);                           
-        }
-
-        public async Task Delete(T e)
-        {
-             _dbSet.Remove(e);
+           var res =   await _dbSet.AddAsync(e);
+            return true;
         }
 
-        public  async Task<T> GetById(object id)
+        public async Task<bool> Delete(T e)
         {
-            return  await  _dbSet.FindAsync(id);
+            _dbSet.Remove(e);
+            return true;
+        }
+
+        public async Task<T> GetById(object id)
+        {
+            return await _dbSet.FindAsync(id);
         }
 
         public async Task<IEnumerable<T>> GetAll()
@@ -37,13 +39,14 @@ namespace HospitalManagement.Repository
             return await _dbSet.ToListAsync();
         }
 
-        public  async Task Update(T e)
+        public async Task Update(T e)
         {
             _dbSet.Update(e);
         }
         public async Task SaveAsync()
         {
-            await _context.SaveChangesAsync();
+            await _appDbContext.SaveChangesAsync();
+           
         }
     }
 }

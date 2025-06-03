@@ -1,6 +1,7 @@
 ﻿using HospitalManagement.DTO;
 using HospitalManagement.Helpers.Interface;
 using HospitalManagement.Models;
+using HospitalManagement.Repository;
 using HospitalManagement.Repository.Interface;
 using HospitalManagement.Services.Interface;
 
@@ -9,12 +10,13 @@ namespace HospitalManagement.Services
     public class AuthService : IAuthService 
     {   
 
-        private readonly IUserRepository _userRepository;
+        //private readonly IUserRepository _userRepository;
+        private readonly UserRepository _userRepository;
         private readonly IRoleRepository _roleRepository;
         private readonly IJwtTokenGenerator _jwtTokenGenerator;
         private readonly ILogger<AuthService> _logger;
 
-        public AuthService(IUserRepository userRepository , IRoleRepository roleRepository , IJwtTokenGenerator jwtTokenGenerator,ILogger<AuthService> logger)
+        public AuthService(UserRepository userRepository , IRoleRepository roleRepository , IJwtTokenGenerator jwtTokenGenerator,ILogger<AuthService> logger)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
@@ -26,7 +28,7 @@ namespace HospitalManagement.Services
         {
             var isUserExist = await    _userRepository.GetByEmailAsync(registerRequestDto.Email);
             if (isUserExist != null)
-            {
+            { 
                 _logger.LogError($"Email already exists  : {registerRequestDto.Email}");
                 return new AuthResponseDto { Success = false, Message = "Email already exists" };
 

@@ -6,21 +6,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HospitalManagement.Repository
 {
-    public class LeaveManagementRepository : ILeaveRepository
+    public class LeaveManagementRepository :GenericRepository<LeaveManagment> , ILeaveRepository
     {
-
-        private readonly AppDbContext _context;
-        public LeaveManagementRepository(AppDbContext context)
+        
+        public LeaveManagementRepository(AppDbContext context) : base(context)
         {
-            _context = context;
+            
         }
         public async  Task<bool> AddLeaveAsync(LeaveManagment leave)
         {
             try
             {
 
-                var res = _context.LeaveManagments.Add(leave);
-                await _context.SaveChangesAsync();
+                var res = _appDbContext.LeaveManagments.Add(leave);
+                await _appDbContext.SaveChangesAsync();
                 return true;
             }
             catch (Exception ex)
@@ -35,7 +34,7 @@ namespace HospitalManagement.Repository
         {
             try
             {
-                return await _context.LeaveManagments.Where(l => l.Status == LeaveStatus.Pending).ToListAsync();
+                return await _appDbContext.LeaveManagments.Where(l => l.Status == LeaveStatus.Pending).ToListAsync();
 
             }catch (Exception ex)
             {
@@ -48,7 +47,7 @@ namespace HospitalManagement.Repository
         {
             try
             {
-                return await _context.LeaveManagments.AnyAsync(l =>
+                return await _appDbContext.LeaveManagments.AnyAsync(l =>
                     l.DoctorId == doctorId &&
                     (int)l.Status == (int)LeaveStatus.Approved &&
                     appointmentDate >= l.LeaveStartDate &&
@@ -67,14 +66,14 @@ namespace HospitalManagement.Repository
         {
             try
             {
-                var leave = await _context.LeaveManagments.FindAsync(leaveId);
+                var leave = await _appDbContext.LeaveManagments.FindAsync(leaveId);
                 if (leave == null) return false;
 
                 leave.Status = status;
                 leave.IsApproved = (status == LeaveStatus.Approved);
                 leave.ApprovedBy = approvedBy;
 
-                await _context.SaveChangesAsync();
+                await _appDbContext.SaveChangesAsync();
                 return true;
             }catch (Exception ex)
             {

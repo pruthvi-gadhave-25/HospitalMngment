@@ -6,32 +6,18 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace HospitalManagement.Repository
 {
-    public class PatientRepository : IPatientRepository
-    {
-        private readonly AppDbContext _context;
-        public PatientRepository(AppDbContext context)
+    public class PatientRepository : GenericRepository<Patient> , IPatientRepository
+    {       
+        public PatientRepository(AppDbContext context) :base(context)
         {
-            _context = context;
-        }
-        public async Task<bool> AddPatientAsync(Patient patient)
-        {
-            try
-            {
-                await _context.Patients.AddAsync(patient);
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch(Exception ex)
-            {
-                return false;
-            }
-        }
+            
+        }       
 
         public async Task<Patient> GetPatientByIdAsync(int id)
         {
             try
             {
-                var res=  await _context.Patients
+                var res=  await _appDbContext.Patients
                     .Include( a=> a.Appointments)
                     .ThenInclude(d => d.Doctor)
                     .ThenInclude(d => d.Department)
@@ -52,7 +38,7 @@ namespace HospitalManagement.Repository
         {
             try
             {
-                var res =  await _context.Patients
+                var res =  await _appDbContext.Patients
                     .Include ( a=> a.Appointments)
                     .ThenInclude(d => d.Doctor)
                     .ThenInclude(d => d.Department)
@@ -69,7 +55,7 @@ namespace HospitalManagement.Repository
         public async Task<List<Patient>> SearchPatientAsync(string name , string mobileNo , string email)
         {
             try{
-                var query = _context.Patients.AsQueryable();
+                var query = _appDbContext.Patients.AsQueryable();
             
                 if (!string.IsNullOrWhiteSpace(name))
                 {
