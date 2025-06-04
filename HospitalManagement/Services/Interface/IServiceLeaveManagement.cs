@@ -2,7 +2,7 @@
 using HospitalManagement.Helpers;
 using HospitalManagement.Models;
 
-namespace HospitalManagement.Services
+namespace HospitalManagement.Services.Interface
 {
     public interface IServiceLeaveManagement
     {

@@ -1,7 +1,7 @@
 ﻿using HospitalManagement.DTO;
 using HospitalManagement.Helpers;
 using HospitalManagement.Models;
-using HospitalManagement.Services;
+using HospitalManagement.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

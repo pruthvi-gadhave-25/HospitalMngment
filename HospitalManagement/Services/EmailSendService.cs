@@ -11,15 +11,17 @@ namespace HospitalManagement.Services
     public class EmailSendService : IEmailService
     {
         private readonly MailSettings _mailSettings;
+        private readonly ILogger<EmailSendService> _logger;
 
-        public EmailSendService(IOptions<MailSettings> options)
+        public EmailSendService(IOptions<MailSettings> options, ILogger<EmailSendService> logger)
         {
             _mailSettings = options.Value;
+            _logger = logger;
         }
         public async Task<Result<string>> EmailSendServices(MailRequest mailRequest)
         {
             var email = new MimeMessage();
-
+          
             email.Sender = MailboxAddress.Parse(_mailSettings.Mail);
             email.To.Add(MailboxAddress.Parse(mailRequest.ToEmail));
             email.Subject = mailRequest.Subject;
@@ -38,8 +40,10 @@ namespace HospitalManagement.Services
                !string.Equals(res, "Sent", StringComparison.OrdinalIgnoreCase) &&
                !string.IsNullOrWhiteSpace(res)) 
             {
-                return Result<string>.ErrorResult($"Email sending failed: {res}");
+                _logger.LogError($"Failed to Send email {mailRequest.ToEmail}");
+                return Result<string>.ErrorResult($"Email sending failed: {res}");                
             }
+            _logger.LogInformation($"Suucfully Sent Email {mailRequest.ToEmail}");
             return Result<string>.SuccessResult(res, "sedn succefully");
         }
     }

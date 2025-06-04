@@ -1,6 +1,7 @@
 ﻿using HospitalManagement.DTO;
 using HospitalManagement.Helpers;
 using HospitalManagement.Models;
+using HospitalManagement.Repository;
 using HospitalManagement.Repository.Interface;
 using HospitalManagement.Services.Interface;
 
@@ -8,19 +9,23 @@ namespace HospitalManagement.Services
 {
     public class LeaveService : IServiceLeaveManagement
     {
-        private readonly ILeaveRepository _leaveRepository;
-        private readonly IDoctorService _doctorService;
+        //private readonly ILeaveRepository _leaveRepository;
+        //private readonly IDoctorService _doctorService;
+
+        private readonly LeaveManagementRepository _leaveRepository;
+        private readonly DoctorRepository _doctorRepository;
+
         private readonly ILogger<LeaveService> _logger;
 
-        public LeaveService(ILeaveRepository leaveRepo , IDoctorService doctorService ,ILogger<LeaveService> logger)
+        public LeaveService(LeaveManagementRepository leaveRepo , DoctorRepository doctorRepository ,ILogger<LeaveService> logger)
         {
-            _doctorService = doctorService; 
+            _doctorRepository = doctorRepository; 
             _leaveRepository = leaveRepo;
             _logger = logger;
         }
         public async Task<Result<bool>> AddLeaveAsync(AddLeaveDto leave)
         {
-            var doctor =  await _doctorService.GetDoctorByIdAsync(leave.DoctorId);
+            var doctor =  await _doctorRepository.GetById(leave.DoctorId);
             if(doctor == null)
             {
                 _logger.LogError("doctor is not found");
@@ -36,7 +41,7 @@ namespace HospitalManagement.Services
                 IsApproved = false ,
                 ApprovedBy = string.Empty
             };
-            var res =  await _leaveRepository.AddLeaveAsync(newLeaveDto);
+            var res =  await _leaveRepository.Add(newLeaveDto);
             if(res ==  false)
             {
                 _logger.LogError("Error occured while adding Leaved");

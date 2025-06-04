@@ -11,7 +11,6 @@ namespace HospitalManagement.Repository
         {
           
         }
-       
         public async Task<List<User>> GetUsersAsync()
         {
             //var res = await (from s in appDbContext.Users
@@ -25,6 +24,38 @@ namespace HospitalManagement.Repository
                 .ToListAsync();                
 
             return res;
+        }
+
+        public async Task<bool> CreatUserAsync(User user)
+        {
+            var res = await _appDbContext.Users.AddAsync(user);
+            await _appDbContext.SaveChangesAsync();
+            if (res == null)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        public async Task<User> GetByEmailAsync(string email)
+        {
+            try
+            {
+                var user = await _appDbContext.Users
+                    .Include(r => r.Role)
+                    .FirstOrDefaultAsync(u => u.Email == email);
+
+                if (user == null)
+                {
+                    return null;
+                }
+                return user;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
+            }
         }
     }
 }

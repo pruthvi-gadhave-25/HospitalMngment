@@ -5,7 +5,6 @@ namespace HospitalManagement.Repository.Interface
 {
     public interface ILeaveRepository
     {
-        Task<bool> AddLeaveAsync(LeaveManagment leave);
         Task<List<LeaveManagment>> GetPendingLeavesAsync();
         Task<bool> UpdateLeaveStatusAsync(int leaveId, LeaveStatus status, string approvedBy);
         Task<bool> IsDoctorOnLeaveAsync(int doctorId, DateTime appointmentDate);

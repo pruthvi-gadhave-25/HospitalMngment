@@ -16,15 +16,20 @@ namespace HospitalManagement.Services
     public class DoctorService : IDoctorService
     {   
         private readonly DoctorRepository _repository;
-        //private readonly IDepartmentService _departmentService;
+        private readonly DepartmentRepository _departmentRepso; 
         private readonly ILogger<DoctorService> _logger;
 
         private readonly DoctorRepository doctorRepository; 
 
-        public DoctorService(DoctorRepository doctorRepository , ILogger<DoctorService> logger)
+        public DoctorService(DoctorRepository doctorRepository , 
+            ILogger<DoctorService> logger ,
+            DepartmentRepository departmentRepository
+            )
+
         {
             _repository = doctorRepository;
             _logger = logger;
+            _departmentRepso = departmentRepository;
         }
         public async Task<Result<Doctor>> AddDoctorAsync(AddDoctorDto doctorDto)
         {
@@ -34,9 +39,9 @@ namespace HospitalManagement.Services
                 _logger.LogError("Doctor is required");
                 return Result<Doctor>.ErrorResult("Doctor is required");
             }
-            var resData = await _departmentService.GetDepartmentByIdAsync(doctorDto.DepartmentId);
+            var resData = await _departmentRepso.GetById(doctorDto.DepartmentId);
 
-            if (resData.IsSuccess == null)
+            if (resData == null)
             {
                 _logger.LogError("Invaid Dept id ");
                 return Result<Doctor>.ErrorResult("invalid department id");
@@ -50,9 +55,14 @@ namespace HospitalManagement.Services
                 DepartmentId = doctorDto.DepartmentId,
             };
 
-            var res =  await _repository.AddDoctorAsync(doctor);
+            //var res =  await _repository.AddDoctorAsync(doctor); //resturning doctor?  
+            bool isSaved =  await _repository.Add(doctor);// 
+            if (!isSaved)
+                return Result<Doctor>.ErrorResult("Failed to Add");
+
+
             _logger.LogInformation("Doctor added succefully");
-            return Result<Doctor>.SuccessResult(res, "Doctor Added Succefully");
+            return Result<Doctor>.SuccessResult(doctor, "Doctor Added Succefully");
                                                           
         }
 
@@ -107,13 +117,13 @@ namespace HospitalManagement.Services
                 _logger.LogError("Invalid  Id ");
                 return Result<GetDoctorDto>.ErrorResult("invliad id ");
             }
-            var resData = await _departmentService.GetDepartmentByIdAsync(res.DepartmentId) ;
+            var resData = await _departmentRepso.GetById(res.DepartmentId) ;
             var doctor = new GetDoctorDto
             {
                 Name = res.Name,
                 Specialization= res.Specialization,
                 ContactDetails= res.ContactDetails,
-                DepartmentName = resData.Data.Name ,
+                DepartmentName = resData.Name ,
                     
                 AvailabilitySlots = res.AvailabilitySlots?.Select(slot => new GetAvailabilitySlotDto
                 {

@@ -11,8 +11,7 @@ using HospitalManagement.Services.Interface;
 namespace HospitalManagement.Services
 {
     public class AppointmentService :  IAppointmentService
-    {
-       
+    {       
         private readonly AppointmentRepository _appointmentRepository;
         private readonly DoctorRepository _doctorRepository;
         private readonly PatientRepository _patientRepository;

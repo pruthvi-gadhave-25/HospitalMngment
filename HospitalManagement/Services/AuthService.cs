@@ -9,8 +9,6 @@ namespace HospitalManagement.Services
 {
     public class AuthService : IAuthService 
     {   
-
-        //private readonly IUserRepository _userRepository;
         private readonly UserRepository _userRepository;
         private readonly IRoleRepository _roleRepository;
         private readonly IJwtTokenGenerator _jwtTokenGenerator;

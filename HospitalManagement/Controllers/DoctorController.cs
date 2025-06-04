@@ -22,7 +22,7 @@ namespace HospitalManagement.Controllers
         }
 
 
-        [Authorize (Roles = "Doctor , Receptionist")]
+        //[Authorize (Roles = "Doctor , Receptionist")]
         [HttpGet("get/doctors")]
         public async Task<IActionResult> GetDoctors()
         {

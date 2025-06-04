@@ -13,23 +13,7 @@ namespace HospitalManagement.Repository
         {
             
         }
-        public async  Task<bool> AddLeaveAsync(LeaveManagment leave)
-        {
-            try
-            {
-
-                var res = _appDbContext.LeaveManagments.Add(leave);
-                await _appDbContext.SaveChangesAsync();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-                return false;
-            }
-          
-        }
-
+       
         public async  Task<List<LeaveManagment>> GetPendingLeavesAsync()
         {
             try

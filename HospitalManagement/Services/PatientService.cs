@@ -15,11 +15,13 @@ namespace HospitalManagement.Services
     {
         private readonly PatientRepository _patientRepo;
         private readonly ILogger<LoggingActionFilter> _logger;
+        
         public PatientService(PatientRepository patientRepository  ,ILogger<LoggingActionFilter> logger )
         {
             _patientRepo = patientRepository;
             _logger = logger;
         }
+
         public async Task<bool> AddPatientAsync(PatientAddDto patientDto)
         {           
             try
@@ -58,6 +60,7 @@ namespace HospitalManagement.Services
                    
             if(res  == null)
             {
+                _logger.LogError("Patient Not found");
                 return Result<GetPatientDto>.ErrorResult("patient not found");
             }
             var patient = new GetPatientDto
@@ -80,7 +83,7 @@ namespace HospitalManagement.Services
             return Result<GetPatientDto>.SuccessResult(patient , "patient fetched succsfully");            
         }
 
-        public async  Task<List<GetPatientDto>> GetPatientsAsync()
+        public async  Task<Result<List<GetPatientDto>>> GetPatientsAsync()
         {
             try{                            
                 var res =  await _patientRepo.GetPatientsAsync();
@@ -105,27 +108,27 @@ namespace HospitalManagement.Services
 
                     }).ToList() ?? new(),
                 }).ToList();
-                return patients;
+                return Result<List<GetPatientDto>>.SuccessResult( patients,"patients fetched succefully"); ;
 
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error Occured {ex.Message}");
-                return  null;
+                return  Result<List<GetPatientDto>>.ErrorResult("No patients found");
             }
         }
 
-        public async Task<List<Patient>> SearchPatientsAsync(string?  name, string? email, string? mobileNo)
+        public async Task<Result<List<Patient>>> SearchPatientsAsync(string?  name, string? email, string? mobileNo)
         {
             try{
-               var res =  await _patientRepo.SearchPatientAsync(name, email, mobileNo);
+               var patients =  await _patientRepo.SearchPatientAsync(name, email, mobileNo);
                
-                return res;
+                return Result<List<Patient>>.SuccessResult( patients,"patient found succefully"); ;
                
             }catch(Exception ex)
             {
                 _logger.LogError($"Error occured {ex.Message}");
-                return  new List<Patient>();
+                return Result<List<Patient>>.ErrorResult("No patients found"); ;
             }
         }
     }
