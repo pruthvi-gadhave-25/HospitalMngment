@@ -17,7 +17,7 @@ namespace HospitalManagement.Services
         private readonly PatientRepository _patientRepository;
         private readonly LeaveManagementRepository _leaveRepo;
         private readonly DepartmentRepository _departmentRepos;
-        private readonly IEmailService _emailService;
+        private readonly IEmailService _emailService; 
 
         public AppointmentService(
             AppointmentRepository appointmentRepository,

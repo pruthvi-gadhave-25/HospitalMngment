@@ -95,6 +95,12 @@ namespace HospitalManagement.Repository
         {
             try
             {
+                //var appointments = await _appDbContext.Appointments
+                //    .Include(d => d.Doctor)
+                //    .ThenInclude(d => d.Department)
+                //    .Where(a => a.AppointmentDate == date).ToListAsync();
+
+
                 var appointments = await _appDbContext.Appointments
                     .Include(d => d.Doctor)
                     .ThenInclude(d => d.Department)

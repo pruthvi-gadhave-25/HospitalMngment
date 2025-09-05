@@ -21,6 +21,8 @@ namespace HospitalManagement.Models
 
         [Required(ErrorMessage = "Department ID is required.")]
         public int DepartmentId { get; set; }
+
+        //public string  Address { get; set; } = string.Empty;
     
         public virtual  Department? Department { get; set; } //foreign
 

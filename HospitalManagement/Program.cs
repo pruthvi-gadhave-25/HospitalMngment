@@ -29,11 +29,11 @@ Log.Logger = new LoggerConfiguration()
 //builder.Host.UseSerilog();
 // Add services to the container.
 
-builder.Services.AddControllers( options =>
+builder.Services.AddControllers(options =>
 {
     options.Filters.Add<LoggingActionFilter>();
-} );
-    
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -41,7 +41,7 @@ builder.Services.AddSwaggerGen();
 string connetionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connetionString));
 
-builder.Services.AddScoped(typeof(IRepository<>) , typeof(GenericRepository<>));
+builder.Services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
 
 builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings")); ;
 builder.Services.AddTransient<IEmailService, EmailSendService>();
@@ -49,14 +49,14 @@ builder.Services.AddTransient<IEmailService, EmailSendService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<DepartmentRepository>();
 
-builder.Services.AddScoped< PatientRepository>();
+builder.Services.AddScoped<PatientRepository>();
 builder.Services.AddScoped<IPatientService, PatientService>();
 //builder.Services.AddScoped<IPatientService, PatientService>();
 builder.Services.AddScoped<DoctorRepository>();
 builder.Services.AddScoped<IDoctorService, DoctorService>();
 
-builder.Services.AddScoped< AppointmentRepository>();
-builder.Services.AddScoped<IAppointmentService ,AppointmentService>();
+builder.Services.AddScoped<AppointmentRepository>();
+builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 
@@ -90,11 +90,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSettings["Key"])),
             RoleClaimType = ClaimTypes.Role
         };
-       
+
     });
 
 
-builder.Services.AddSwaggerGen( c =>
+builder.Services.AddSwaggerGen(c =>
     {
         c.SwaggerDoc("v1", new OpenApiInfo
         {
@@ -126,13 +126,12 @@ builder.Services.AddSwaggerGen( c =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
 app.UseMiddleware<GlobalExceptionMiddleware>();
-app.UseHttpsRedirection( );
+app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
