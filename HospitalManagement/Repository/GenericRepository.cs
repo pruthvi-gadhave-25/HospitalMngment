@@ -36,6 +36,8 @@ namespace HospitalManagement.Repository
 
         public async Task<IEnumerable<T>> GetAll()
         {
+            Console.WriteLine(_dbSet);
+            //return await _appDbContext.Appointments.ToListAsync();
             return await _dbSet.ToListAsync();
         }
 
