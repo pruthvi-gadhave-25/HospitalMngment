@@ -1,4 +1,5 @@
-﻿using Azure;
+﻿using AutoMapper;
+using Azure;
 using HospitalManagement.Data;
 using HospitalManagement.DTO;
 using HospitalManagement.Helpers;
@@ -15,11 +16,14 @@ namespace HospitalManagement.Services
     {
         private readonly PatientRepository _patientRepo;
         private readonly ILogger<LoggingActionFilter> _logger;
+        private readonly IMapper _mapper; 
+
         
-        public PatientService(PatientRepository patientRepository  ,ILogger<LoggingActionFilter> logger )
+        public PatientService(PatientRepository patientRepository  ,ILogger<LoggingActionFilter> logger  , IMapper mapper )
         {
             _patientRepo = patientRepository;
             _logger = logger;
+            _mapper = mapper;
         }
 
         public async Task<bool> AddPatientAsync(PatientAddDto patientDto)
@@ -87,28 +91,36 @@ namespace HospitalManagement.Services
         {
             try{                            
                 var res =  await _patientRepo.GetPatientsAsync();
-                var patients =res.Select( p => new GetPatientDto
-                {
-                    Id =p.Id,
-                    Name = p.Name,
-                    Email = p.Email,
-                    Mobile = p.Mobile,
-                    Gender = p.Gender,
-                    Dob = p.Dob,
-                    
-                    Appointments = p.Appointments?.Select( p => new GetAppointmentsDto
-                    {
-                        Diagnoasis = p.Diagnoasis,
-                        Treatement = p.Treatement,
-                        Medications = p.Medications,
-                        AppointmentDate = p.AppointmentDate,
-                        AppointmentTime = p.AppointmentTime,
-                        DoctorName = p.Doctor?.Name ?? "N/a",
-                        DepartmentName = p.Doctor?.Department?.Name ?? "N/a"
 
-                    }).ToList() ?? new(),
-                }).ToList();
-                return Result<List<GetPatientDto>>.SuccessResult( patients,"patients fetched succefully"); ;
+                //var patients =res.Select( p => new GetPatientDto
+                //{
+                //    Id =p.Id,
+                //    Name = p.Name,
+                //    Email = p.Email,
+                //    Mobile = p.Mobile,
+                //    Gender = p.Gender,
+                //    Dob = p.Dob,
+                    
+                //    Appointments = p.Appointments?.Select( p => new GetAppointmentsDto
+                //    {
+                //        Diagnoasis = p.Diagnoasis,
+                //        Treatement = p.Treatement,
+                //        Medications = p.Medications,
+                //        AppointmentDate = p.AppointmentDate,
+                //        AppointmentTime = p.AppointmentTime,
+                //        DoctorName = p.Doctor?.Name ?? "N/a",
+                //        DepartmentName = p.Doctor?.Department?.Name ?? "N/a"
+
+                //    }).ToList() ?? new(),
+                //}).ToList();
+
+                if(res == null  && !res.Any())
+                {
+                    return Result<List<GetPatientDto>>.ErrorResult("No patients found");
+                }
+                var patientsDto =  _mapper.Map<List<GetPatientDto>>(res);    
+                
+                return Result<List<GetPatientDto>>.SuccessResult( patientsDto,"patients fetched succefully"); ;
 
             }
             catch (Exception ex)

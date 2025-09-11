@@ -118,8 +118,6 @@ namespace HospitalManagement.Repository
             }
         }
 
-     
-
         public async Task<bool> RescheduleAppointment(int appointmentId, DateTime newDate, TimeOnly newTime)
         {
             try

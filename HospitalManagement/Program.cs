@@ -2,6 +2,7 @@ using HospitalManagement.Data;
 using HospitalManagement.Helpers;
 using HospitalManagement.Helpers.Interface;
 using HospitalManagement.Interface;
+using HospitalManagement.Mapping;
 using HospitalManagement.Models.Mails;
 using HospitalManagement.Repository;
 using HospitalManagement.Repository.Interface;
@@ -14,6 +15,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Security.Claims;
+using AutoMapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +35,8 @@ builder.Services.AddControllers(options =>
 {
     options.Filters.Add<LoggingActionFilter>();
 });
+
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
