@@ -9,5 +9,14 @@
         Task<IEnumerable<T>> GetAll();
         Task SaveAsync();
 
+
+
+        // new better performnce
+        IQueryable<T> GetData();
+        //Task<T?> GetById();
+        //Task Add();
+        //void Update();
+        //void Delete();
+        //Task SaveAsync();
     }
 }

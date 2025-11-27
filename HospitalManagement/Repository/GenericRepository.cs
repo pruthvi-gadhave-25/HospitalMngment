@@ -36,9 +36,13 @@ namespace HospitalManagement.Repository
 
         public async Task<IEnumerable<T>> GetAll()
         {
-            return await _dbSet.ToListAsync();
+            return await _dbSet.ToListAsync();//iqeryable
         }
 
+        public  IQueryable<T> GetAllData()
+        {
+            return  _appDbContext.Set<T>();
+        }
         public async Task Update(T e)
         {
             _dbSet.Update(e);
@@ -48,5 +52,15 @@ namespace HospitalManagement.Repository
             await _appDbContext.SaveChangesAsync();
            
         }
+
+        ///////
+        ///NEW METHODS 
+        ///
+
+        public  IQueryable<T> GetData()
+        {
+            return _dbSet.AsNoTracking();
+        }
+
     }
 }

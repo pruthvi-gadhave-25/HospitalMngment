@@ -7,6 +7,7 @@ using HospitalManagement.Models.Mails;
 using HospitalManagement.Repository;
 using HospitalManagement.Repository.Interface;
 using HospitalManagement.Services.Interface;
+using Microsoft.EntityFrameworkCore;
 
 namespace HospitalManagement.Services
 {
@@ -142,17 +143,22 @@ namespace HospitalManagement.Services
         public async Task<Result<List<GetAppointmentsDto>>> GetAppointmentAsync()
         {
                 var res = await _appointmentRepository.GetAll();
+            var query =  _appointmentRepository.GetData();//this is ony query i.e. iqeryable 
 
-            var appointmentDto = res.Select(s => new GetAppointmentsDto
+            query = query.Include(a => a.Doctor)
+                    .ThenInclude(d => d.Department);
+
+            var appointmentDto = query.Select(s => new GetAppointmentsDto
             {
                 Diagnoasis = s.Diagnoasis,
                 Medications = s.Medications,
                 Treatement = s.Treatement,
                 AppointmentDate =s.AppointmentDate ,
                 AppointmentTime = s.AppointmentTime ,
-                DoctorName = s.Doctor?.Name ?? "N/a",
+                //DoctorName = s.Doctor?.Name ?? "N/a",
+                DoctorName  =  s.Doctor.Name ?? "N/a",
                 Status = s.Status,
-                DepartmentName = s.Doctor?.Department?.Name ?? "N/a"
+                DepartmentName = s.Doctor.Department.Name ?? "N/a"
             }).ToList() ;
 
                 if (res == null)
@@ -299,5 +305,41 @@ namespace HospitalManagement.Services
             };
             return Result<VisitsAddPatientDto>.SuccessResult(visits, "visits of patient found");
         }
+
+        public async Task<PagedResult<GetAppointmentsDto>>GteAppintments(int page= 1 ,int pageSize =10)
+        {
+            var query = _appointmentRepository.GetAllData(); // IQueryable<Appointment>
+
+            //if (query == null)
+            //    return Result<PagedResult<GetAppointmentsDto>>.ErrorResult("No appointments found.");
+
+            // Step 2: Project to DTO before pagination
+            var projectedQuery = query.Select(s => new GetAppointmentsDto
+            {
+                Diagnoasis = s.Diagnoasis,
+                Medications = s.Medications,
+                Treatement = s.Treatement,
+                AppointmentDate = s.AppointmentDate,
+                AppointmentTime = s.AppointmentTime,
+                DoctorName = s.Doctor != null ? s.Doctor.Name : "N/A",
+                Status = s.Status,
+                DepartmentName = s.Doctor != null && s.Doctor.Department != null ? s.Doctor.Department.Name : "N/A"
+            });
+
+            // Step 3: Apply pagination
+            var items = await projectedQuery
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+            var pagedResult = new PagedResult<GetAppointmentsDto>
+            {
+                CurrentPage = page,
+                PageSize = pageSize,
+                //TotalCount = totalCount,
+                Items = items
+            };
+            return pagedResult;
+        }        
     }
 }
