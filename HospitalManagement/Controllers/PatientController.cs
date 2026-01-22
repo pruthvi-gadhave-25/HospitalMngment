@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HospitalManagement.Controllers
 {
+    [AllowAnonymous]
     //[Authorize(Roles = "Admin, Receptionist")]
     [Route("api/[controller]")]
     [ApiController]

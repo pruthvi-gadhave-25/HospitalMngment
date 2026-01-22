@@ -9,6 +9,7 @@ using HospitalManagement.Repository;
 using HospitalManagement.Repository.Interface;
 using HospitalManagement.Services.Interface;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace HospitalManagement.Services
 {
@@ -17,13 +18,15 @@ namespace HospitalManagement.Services
         private readonly PatientRepository _patientRepo;
         private readonly ILogger<LoggingActionFilter> _logger;
         private readonly IMapper _mapper; 
+        private readonly IMemoryCache _cache;  
 
         
-        public PatientService(PatientRepository patientRepository  ,ILogger<LoggingActionFilter> logger  , IMapper mapper )
+        public PatientService(PatientRepository patientRepository  ,ILogger<LoggingActionFilter> logger  , IMapper mapper  , IMemoryCache memoryCache)
         {
             _patientRepo = patientRepository;
             _logger = logger;
             _mapper = mapper;
+            _cache = memoryCache;
         }
 
         public async Task<bool> AddPatientAsync(PatientAddDto patientDto)
@@ -87,10 +90,17 @@ namespace HospitalManagement.Services
             return Result<GetPatientDto>.SuccessResult(patient , "patient fetched succsfully");            
         }
 
+        // imeplemnts in memory caching in this //   and  automapper 
         public async  Task<Result<List<GetPatientDto>>> GetPatientsAsync()
         {
-            try{                            
-                var res =  await _patientRepo.GetPatientsAsync();
+            try{
+
+                string cacheKey = "Patientslist";
+
+                if(_cache.TryGetValue(cacheKey,out List<GetPatientDto> cachedPatients))
+                {
+                    return Result<List<GetPatientDto>>.SuccessResult(cachedPatients , "fethced succefully");
+                }
 
                 //var patients =res.Select( p => new GetPatientDto
                 //{
@@ -100,7 +110,7 @@ namespace HospitalManagement.Services
                 //    Mobile = p.Mobile,
                 //    Gender = p.Gender,
                 //    Dob = p.Dob,
-                    
+
                 //    Appointments = p.Appointments?.Select( p => new GetAppointmentsDto
                 //    {
                 //        Diagnoasis = p.Diagnoasis,
@@ -114,12 +124,22 @@ namespace HospitalManagement.Services
                 //    }).ToList() ?? new(),
                 //}).ToList();
 
-                if(res == null  && !res.Any())
+                var res = await _patientRepo.GetPatientsAsync();
+
+                if (res == null  && !res.Any())
                 {
                     return Result<List<GetPatientDto>>.ErrorResult("No patients found");
                 }
-                var patientsDto =  _mapper.Map<List<GetPatientDto>>(res);    
-                
+                var patientsDto =  _mapper.Map<List<GetPatientDto>>(res);
+
+
+                var options = new MemoryCacheEntryOptions()
+                    .SetSlidingExpiration(TimeSpan.FromMinutes(5))
+                    .SetAbsoluteExpiration(TimeSpan.FromMinutes(30));
+
+
+                    _cache.Set(cacheKey, patientsDto ,options);
+
                 return Result<List<GetPatientDto>>.SuccessResult( patientsDto,"patients fetched succefully"); ;
 
             }

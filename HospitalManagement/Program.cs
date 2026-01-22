@@ -1,4 +1,6 @@
+using AutoMapper;
 using HospitalManagement.Data;
+using HospitalManagement.Extensions;
 using HospitalManagement.Helpers;
 using HospitalManagement.Helpers.Interface;
 using HospitalManagement.Interface;
@@ -15,7 +17,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Security.Claims;
-using AutoMapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,7 +37,8 @@ builder.Services.AddControllers(options =>
     options.Filters.Add<LoggingActionFilter>();
 });
 
-builder.Services.AddAutoMapper(typeof(MappingProfile));
+builder.Services.AddAutoMapper(typeof(MappingProfile)); //mapper 
+builder.Services.AddMemoryCache();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -45,37 +47,16 @@ builder.Services.AddSwaggerGen();
 string connetionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connetionString));
 
-builder.Services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
 
 builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings")); ;
-builder.Services.AddTransient<IEmailService, EmailSendService>();
+//builder.Services.AddTransient<IEmailService, EmailSendService>();
 
-builder.Services.AddScoped<IDepartmentService, DepartmentService>();
-builder.Services.AddScoped<DepartmentRepository>();
+//builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+//builder.Services.AddScoped<DepartmentRepository>();
 
-builder.Services.AddScoped<PatientRepository>();
-builder.Services.AddScoped<IPatientService, PatientService>();
-//builder.Services.AddScoped<IPatientService, PatientService>();
-builder.Services.AddScoped<DoctorRepository>();
-builder.Services.AddScoped<IDoctorService, DoctorService>();
+builder.Services.AddApplicationServices(); //all services added  here 
+builder.Services.AddInfrastructureServices(); // and here 
 
-builder.Services.AddScoped<AppointmentRepository>();
-builder.Services.AddScoped<IAppointmentService, AppointmentService>();
-
-builder.Services.AddScoped<IRoleRepository, RoleRepository>();
-
-builder.Services.AddScoped<UserRepository>();
-builder.Services.AddScoped<IUserService, UserService>();
-
-builder.Services.AddScoped<LeaveManagementRepository>();
-builder.Services.AddScoped<IServiceLeaveManagement, LeaveService>();
-
-builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-
-
-
-//builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 

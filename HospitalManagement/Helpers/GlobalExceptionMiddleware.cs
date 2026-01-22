@@ -46,6 +46,7 @@ namespace HospitalManagement.Helpers
             var res = JsonConvert.SerializeObject(errorResponse);
             await context.Response.WriteAsync(res); 
         }
+
        
     }
 }

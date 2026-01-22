@@ -7,7 +7,7 @@ using System;
 namespace HospitalManagement.Mapping
 {
     public class MappingProfile : Profile
-    {
+    { //this is Automapper 
         //var config = new ITypeMappingConfiguration(cfg =>
         //{
 

@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HospitalManagement.Controllers
 {
-    //[Authorize(Roles = "Admin ,Doctor ,Receptionist , Patients")]
+    [Authorize(Roles = "Admin ,Doctor ,Receptionist , Patients")]
     [Route("api/[controller]")]
     [ApiController]
     public class AppointmentController : ControllerBase
@@ -59,7 +59,7 @@ namespace HospitalManagement.Controllers
         }
 
 
-
+        [AllowAnonymous]
         [HttpGet("get/appointmets")]
         public async Task<IActionResult> GetAppointments()
         {
