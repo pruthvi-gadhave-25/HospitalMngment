@@ -1,37 +1,35 @@
-﻿using HospitalManagement.DTO;
+﻿using HospitalManagement.Data.UnitOfWork;
+using HospitalManagement.DTO;
 using HospitalManagement.Helpers.Interface;
 using HospitalManagement.Models;
-using HospitalManagement.Repository;
-using HospitalManagement.Repository.Interface;
 using HospitalManagement.Services.Interface;
 
 namespace HospitalManagement.Services
 {
     public class AuthService : IAuthService 
     {   
-        private readonly UserRepository _userRepository;
-        private readonly IRoleRepository _roleRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IJwtTokenGenerator _jwtTokenGenerator;
         private readonly ILogger<AuthService> _logger;
 
-        public AuthService(UserRepository userRepository , IRoleRepository roleRepository , IJwtTokenGenerator jwtTokenGenerator,ILogger<AuthService> logger)
+        public AuthService(IUnitOfWork unitOfWork, IJwtTokenGenerator jwtTokenGenerator, ILogger<AuthService> logger)
         {
-            _userRepository = userRepository;
-            _roleRepository = roleRepository;
+            _unitOfWork = unitOfWork;
             _jwtTokenGenerator = jwtTokenGenerator;
             _logger = logger;
         }
 
         public async Task<AuthResponseDto> RegisterUser(RegisterRequestDto registerRequestDto)
         {
-            var isUserExist = await    _userRepository.GetByEmailAsync(registerRequestDto.Email);
+            var isUserExist = await _unitOfWork.UserRepository.GetByEmailAsync(registerRequestDto.Email);
             if (isUserExist != null)
             { 
                 _logger.LogError($"Email already exists  : {registerRequestDto.Email}");
                 return new AuthResponseDto { Success = false, Message = "Email already exists" };
 
             }
-            var role = await _roleRepository.GetRoleBynameAsync(registerRequestDto.Role);
+            
+            var role = await _unitOfWork.RoleRepository.GetRoleBynameAsync(registerRequestDto.Role);
 
             if (role == null)
             {
@@ -48,47 +46,68 @@ namespace HospitalManagement.Services
                 RoleId = role.Id,
                 Role =  role
             };
-            await _userRepository.CreatUserAsync(user);
+            
+            await _unitOfWork.UserRepository.Add(user);
+            await _unitOfWork.SaveChangesAsync();
+            
             _logger.LogInformation($"user Registered Succefully {user.UserName} and role is {user.Role.RoleName}");
             return new AuthResponseDto { Success = true, Message = "user registered Succefully" , Role = user.Role.RoleName};
         }
 
-        public async  Task<AuthResponseDto> LoginUserASync(LoginRequestDto loginRequestDto)
+        public async Task<AuthResponseDto> LoginUserAsync(LoginRequestDto loginRequestDto)
         {
             try
             {
-                User user =await   _userRepository.GetByEmailAsync(loginRequestDto.Email);
+                User user = await _unitOfWork.UserRepository.GetByEmailAsync(loginRequestDto.Email);
+
                 if (user == null)
                 {
-                    _logger.LogError($"\n==========\n Email  does not exists  : {loginRequestDto.Email}\n =============\n");
-                    return new AuthResponseDto { Message ="invalid email" , Success=false};
+                    _logger.LogWarning($"Email does not exist: {loginRequestDto.Email}");
+                    return new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = "Invalid email"
+                    };
                 }
-                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(loginRequestDto.Password);
 
-                bool isPasswordValid = BCrypt.Net.BCrypt.Verify(loginRequestDto.Password, user.PasswordHash);
+                bool isPasswordValid = BCrypt.Net.BCrypt.Verify(
+                    loginRequestDto.Password,
+                    user.PasswordHash
+                );
 
                 if (!isPasswordValid)
                 {
-                    _logger.LogError($"Password does not match");
-                    return new AuthResponseDto { Message = "passowrd does not match", Success = false };
+                    _logger.LogWarning("Password does not match");
+                    return new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = "Password does not match"
+                    };
                 }
-               var token =  _jwtTokenGenerator.GenerateJwtToken(user);
 
-                _logger.LogInformation($"\n========\n user Loin Succefully {user.UserName} and role is {user.Role} \n=============\n");
+                var token = _jwtTokenGenerator.GenerateJwtToken(user);
+
+                _logger.LogInformation(
+                    $"User login successful: {user.UserName}, Role: {user.Role.RoleName}"
+                );
+
                 return new AuthResponseDto
                 {
-                    Success = false,
-                    Message = "token created ",
+                    Success = true,
+                    Message = "Login successful",
                     Token = token,
                     Role = user.Role.RoleName
                 };
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
-                _logger.LogError($"exception Occurs : {ex.Message}");
-                return new AuthResponseDto { Success = false,   Message=ex.Message };   
+                _logger.LogError(ex, "Login exception");
+                return new AuthResponseDto
+                {
+                    Success = false,
+                    Message = "Internal server error"
+                };
             }
         }
-
-        
     }
 }

@@ -1,4 +1,5 @@
-﻿using HospitalManagement.Helpers;
+﻿using HospitalManagement.Data.UnitOfWork;
+using HospitalManagement.Helpers;
 using HospitalManagement.Helpers.Interface;
 using HospitalManagement.Interface;
 using HospitalManagement.Repository;
@@ -12,6 +13,9 @@ namespace HospitalManagement.Extensions
     {
         public static IServiceCollection AddApplicationServices(this IServiceCollection  services)
         {
+            // Register Unit of Work
+            services.AddScoped<IUnitOfWork, UnitofWork>();
+            
             services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
             //repository  
             services.AddScoped<PatientRepository>();

@@ -32,6 +32,18 @@ Log.Logger = new LoggerConfiguration()
 //builder.Host.UseSerilog();
 // Add services to the container.
 
+//CORS 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        policy
+        .WithOrigins("http://localhost:5173")
+        .AllowAnyHeader()
+        .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddControllers(options =>
 {
     options.Filters.Add<LoggingActionFilter>();
@@ -117,6 +129,8 @@ app.UseSwaggerUI();
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseHttpsRedirection();
+
+app.UseCors("FrontendPolicy");//CORS before auth 
 
 app.UseAuthentication();
 app.UseAuthorization();
