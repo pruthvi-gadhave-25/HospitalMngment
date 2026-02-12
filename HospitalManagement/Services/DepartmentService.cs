@@ -1,34 +1,36 @@
 ﻿using Azure;
-using HospitalManagement.Data.UnitOfWork;
 using HospitalManagement.Helpers;
 using HospitalManagement.Models;
+using HospitalManagement.Repository;
+using HospitalManagement.Repository.Interface;
 using HospitalManagement.Services.Interface;
 
 namespace HospitalManagement.Services
 {
     public class DepartmentService : IDepartmentService
     {   
-        private readonly IUnitOfWork _unitOfWork;
+       private readonly DepartmentRepository _departmentRepo;
 
-        public DepartmentService(IUnitOfWork unitOfWork)
+
+        public DepartmentService(DepartmentRepository departmentRepository)
         {
-            _unitOfWork = unitOfWork;
+            _departmentRepo = departmentRepository;
+        }
+        public async  Task<Result<Department?>> AddDepartmentAsync(Department deprtment)
+        {
+           var res =  await _departmentRepo.Add(deprtment);
+                if(res == true )
+                {
+                    return Result<Department?>.ErrorResult("failed to add department");                    
+                }
+            return Result<Department?>.SuccessResult(deprtment,"added suucefully");
         }
 
-        public async Task<Result<Department?>> AddDepartmentAsync(Department deprtment)
-        {
-            var res = await _unitOfWork.DepartmentRepository.Add(deprtment);
-            if (res == true)
-            {
-                return Result<Department?>.ErrorResult("failed to add department");                    
-            }
-            await _unitOfWork.SaveChangesAsync();
-            return Result<Department?>.SuccessResult(deprtment, "added suucefully");
-        }
 
-        public async Task<Result<List<Department>>> GetDepartmentAsync()
+        public  async Task<Result<List<Department>>> GetDepartmentAsync()
         {
-            var res = await _unitOfWork.DepartmentRepository.GetAll();
+                            
+            var res = await _departmentRepo.GetAll();
             if (res == null)
             {
                 return Result<List<Department>>.ErrorResult("failed to fetch departments");
@@ -36,9 +38,9 @@ namespace HospitalManagement.Services
             return Result<List<Department>>.SuccessResult(res.ToList(), "fetched  suucefully");
         }
 
-        public async Task<Result<Department?>> GetDepartmentByIdAsync(int id)
+        public async  Task<Result<Department?>> GetDepartmentByIdAsync(int id)
         {            
-            var res = await _unitOfWork.DepartmentRepository.GetById(id);
+            var res = await _departmentRepo.GetById(id);
             if (res == null)
             {
                 return Result<Department?>.ErrorResult("failed to get department or invalid id");
@@ -48,25 +50,22 @@ namespace HospitalManagement.Services
 
         public async Task<Result<bool>> UpdateDepartmentAsync(Department department)
         {
-            var dept = await _unitOfWork.DepartmentRepository.GetById(department.Id);
-            if (dept == null)
+               var  dept = await _departmentRepo.GetById(department.Id);
+            if(dept == null)
             {
                 return Result<bool>.ErrorResult("department is null  or invalid id ");
             }
-            await _unitOfWork.DepartmentRepository.Update(department);
-            await _unitOfWork.SaveChangesAsync();
-            return Result<bool>.SuccessResult(true, "Updated deprtment ");
+            await _departmentRepo.Update(department);
+            return Result<bool>.SuccessResult(true ,"Updated deprtment ");
         }
-
         public async Task<Result<bool>> DeleteDepartmentAsync(int id)
         {
-            var department = await _unitOfWork.DepartmentRepository.GetById(id);
-            if (department == null)
-            {
-                return Result<bool>.ErrorResult("invalid deot id");
-            }
-            var res = await _unitOfWork.DepartmentRepository.Delete(department);
-            await _unitOfWork.SaveChangesAsync();
+                var department =await  _departmentRepo.GetById(id);
+                if (department == null)
+                {
+                    return Result<bool>.ErrorResult("invalid deot id");
+                }
+                var res =  await _departmentRepo.Delete(department);
             return Result<bool>.SuccessResult(res, "deleted succesfullly");
         }
     }

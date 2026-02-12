@@ -1,13 +1,141 @@
-﻿using HospitalManagement.Models;
+﻿using AutoMapper;
+using HospitalManagement.Data.UnitOfWork;
+using HospitalManagement.DTO;
+using HospitalManagement.Helpers;
+using HospitalManagement.Models;
+using HospitalManagement.Services.Interface;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 
-namespace HospitalManagement.Repository.Interface
+namespace HospitalManagement.Services
 {
-    public interface IPatientRepository
+    public class PatientService : IPatientService
     {
-        //Task<bool> AddPatientAsync(Patient patient);
-        //Task<List<Patient>> GetPatientsAsync();
-        //Task<Patient> GetPatientByIdAsync(int id);
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly ILogger<PatientService> _logger;
+        private readonly IMapper _mapper;
+        private readonly IMemoryCache _cache;
 
-        //Task<List<Patient>> SearchPatientAsync(string name, string mobileNo, string email);
+        public PatientService(IUnitOfWork unitOfWork, ILogger<PatientService> logger, IMapper mapper, IMemoryCache memoryCache)
+        {
+            _unitOfWork = unitOfWork;
+            _logger = logger;
+            _mapper = mapper;
+            _cache = memoryCache;
+        }
+
+        public async Task<bool> AddPatientAsync(PatientAddDto patientDto)
+        {
+            try
+            {
+                if (patientDto == null)
+                {
+                    return false;
+                }
+
+                var patient = new Patient
+                {
+                    Name = patientDto.Name,
+                    Email = patientDto.Email,
+                    Mobile = patientDto.Mobile,
+                    Gender = patientDto.Gender,
+                    Dob = patientDto.Dob
+                };
+
+                await _unitOfWork.PatientRepository.Add(patient);
+                await _unitOfWork.SaveChangesAsync();
+
+                // invalidate cache
+                _cache.Remove("Patientslist");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"error occured {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<Result<GetPatientDto>> GetPatientByIdAsync(int id)
+        {
+            var res = await _unitOfWork.PatientRepository.GetPatientByIdAsync(id); // get related data
+
+            if (res == null)
+            {
+                _logger.LogError("Patient Not found");
+                return Result<GetPatientDto>.ErrorResult("patient not found");
+            }
+
+            var patient = new GetPatientDto
+            {
+                Id = res.Id,
+                Name = res.Name,
+                Email = res.Email,
+                Mobile = res.Mobile,
+                Gender = res.Gender,
+                Dob = res.Dob,
+                Appointments = res.Appointments?.Select(p => new GetAppointmentsDto
+                {
+                    Diagnoasis = p.Diagnoasis,
+                    Treatement = p.Treatement,
+                    Medications = p.Medications,
+                    DepartmentName = p.Doctor?.Department?.Name ?? "N/A",
+                    DoctorName = p.Doctor?.Name ?? "Unknown Doctor"
+                }).ToList(),
+            };
+
+            return Result<GetPatientDto>.SuccessResult(patient, "patient fetched succsfully");
+        }
+
+        public async Task<Result<List<GetPatientDto>>> GetPatientsAsync()
+        {
+            try
+            {
+                string cacheKey = "Patientslist";
+
+                if (_cache.TryGetValue(cacheKey, out List<GetPatientDto> cachedPatients))
+                {
+                    return Result<List<GetPatientDto>>.SuccessResult(cachedPatients, "fethced succefully");
+                }
+
+                var res = await _unitOfWork.PatientRepository.GetPatientsAsync();
+
+                if (res == null || !res.Any())
+                {
+                    return Result<List<GetPatientDto>>.ErrorResult("No patients found");
+                }
+
+                var patientsDto = _mapper.Map<List<GetPatientDto>>(res);
+
+                var options = new MemoryCacheEntryOptions()
+                    .SetSlidingExpiration(TimeSpan.FromMinutes(5))
+                    .SetAbsoluteExpiration(TimeSpan.FromMinutes(30));
+
+                _cache.Set(cacheKey, patientsDto, options);
+
+                return Result<List<GetPatientDto>>.SuccessResult(patientsDto, "patients fetched succefully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error Occured {ex.Message}");
+                return Result<List<GetPatientDto>>.ErrorResult("No patients found");
+            }
+        }
+
+        public async Task<Result<List<Patient>>> SearchPatientsAsync(string? name, string? email, string? mobileNo)
+        {
+            try
+            {
+                    var patients = await _unitOfWork.PatientRepository.SearchPatientAsync(name, mobileNo, email);
+
+                return Result<List<Patient>>.SuccessResult(patients, "patient found succefully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error occured {ex.Message}");
+                return Result<List<Patient>>.ErrorResult("No patients found");
+            }
+        }
     }
 }

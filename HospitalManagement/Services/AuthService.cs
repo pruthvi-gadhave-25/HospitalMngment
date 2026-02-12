@@ -1,35 +1,37 @@
-﻿using HospitalManagement.Data.UnitOfWork;
-using HospitalManagement.DTO;
+﻿using HospitalManagement.DTO;
 using HospitalManagement.Helpers.Interface;
 using HospitalManagement.Models;
+using HospitalManagement.Repository;
+using HospitalManagement.Repository.Interface;
 using HospitalManagement.Services.Interface;
 
 namespace HospitalManagement.Services
 {
     public class AuthService : IAuthService 
     {   
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly UserRepository _userRepository;
+        private readonly IRoleRepository _roleRepository;
         private readonly IJwtTokenGenerator _jwtTokenGenerator;
         private readonly ILogger<AuthService> _logger;
 
-        public AuthService(IUnitOfWork unitOfWork, IJwtTokenGenerator jwtTokenGenerator, ILogger<AuthService> logger)
+        public AuthService(UserRepository userRepository , IRoleRepository roleRepository , IJwtTokenGenerator jwtTokenGenerator,ILogger<AuthService> logger)
         {
-            _unitOfWork = unitOfWork;
+            _userRepository = userRepository;
+            _roleRepository = roleRepository;
             _jwtTokenGenerator = jwtTokenGenerator;
             _logger = logger;
         }
 
         public async Task<AuthResponseDto> RegisterUser(RegisterRequestDto registerRequestDto)
         {
-            var isUserExist = await _unitOfWork.UserRepository.GetByEmailAsync(registerRequestDto.Email);
+            var isUserExist = await    _userRepository.GetByEmailAsync(registerRequestDto.Email);
             if (isUserExist != null)
             { 
                 _logger.LogError($"Email already exists  : {registerRequestDto.Email}");
                 return new AuthResponseDto { Success = false, Message = "Email already exists" };
 
             }
-            
-            var role = await _unitOfWork.RoleRepository.GetRoleBynameAsync(registerRequestDto.Role);
+            var role = await _roleRepository.GetRoleBynameAsync(registerRequestDto.Role);
 
             if (role == null)
             {
@@ -46,10 +48,7 @@ namespace HospitalManagement.Services
                 RoleId = role.Id,
                 Role =  role
             };
-            
-            await _unitOfWork.UserRepository.Add(user);
-            await _unitOfWork.SaveChangesAsync();
-            
+            await _userRepository.CreatUserAsync(user);
             _logger.LogInformation($"user Registered Succefully {user.UserName} and role is {user.Role.RoleName}");
             return new AuthResponseDto { Success = true, Message = "user registered Succefully" , Role = user.Role.RoleName};
         }
@@ -58,7 +57,7 @@ namespace HospitalManagement.Services
         {
             try
             {
-                User user = await _unitOfWork.UserRepository.GetByEmailAsync(loginRequestDto.Email);
+                User user = await _userRepository.GetByEmailAsync(loginRequestDto.Email);
 
                 if (user == null)
                 {
@@ -109,5 +108,7 @@ namespace HospitalManagement.Services
                 };
             }
         }
+
+
     }
 }

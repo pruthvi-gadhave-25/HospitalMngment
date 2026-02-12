@@ -1,4 +1,5 @@
 ﻿using HospitalManagement.Data;
+using HospitalManagement.Data.UnitOfWork;
 using HospitalManagement.DTO;
 using HospitalManagement.Helpers;
 using HospitalManagement.Interface;
@@ -17,9 +18,11 @@ namespace HospitalManagement.Services
         private readonly PatientRepository _patientRepository;
         private readonly LeaveManagementRepository _leaveRepo;
         private readonly DepartmentRepository _departmentRepos;
-        private readonly IEmailService _emailService; 
+        private readonly IEmailService _emailService;
+        private readonly IUnitOfWork _uow;
 
-        public AppointmentService(
+        public AppointmentService( 
+            IUnitOfWork uow ,
             AppointmentRepository appointmentRepository,
             DoctorRepository doctorRepository,
             PatientRepository patientRepository,
@@ -34,6 +37,7 @@ namespace HospitalManagement.Services
             _leaveRepo = leaveManagementRepository;
             _emailService = emailService;
             _departmentRepos = departmentRepository;
+            _uow = uow;
         }
 
         public async  Task<Result<bool>> BookAppointment(BookAppointmentDto appointmentDto)

@@ -1,9 +1,8 @@
 ﻿using HospitalManagement.Repository.Interface;
-using HospitalManagement.Repository;
 
 namespace HospitalManagement.Data.UnitOfWork
 {
-    public interface IUnitOfWork : IDisposable 
+    public interface IUnitOfWork  
     {
         IDepartmentRepository DepartmentRepository { get; }
         IDoctorRepository DoctorRepository { get; }
@@ -12,10 +11,6 @@ namespace HospitalManagement.Data.UnitOfWork
         IUserRepository UserRepository { get; }
         IRoleRepository RoleRepository { get; }
         ILeaveRepository LeaveRepository { get; }
-
-        Task<int> SaveChangesAsync();
-        Task BeginTransactionAsync();
-        Task CommitAsync();
-        Task RollbackAsync();
+     
     }
 }

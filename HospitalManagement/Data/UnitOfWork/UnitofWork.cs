@@ -1,5 +1,4 @@
-﻿using HospitalManagement.Data;
-using HospitalManagement.Repository;
+﻿using HospitalManagement.Repository;
 using HospitalManagement.Repository.Interface;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -129,8 +128,6 @@ namespace HospitalManagement.Data.UnitOfWork
 
         public void Dispose()
         {
-            _transaction?.Dispose();
-            _context?.Dispose();
         }
     }
 }
