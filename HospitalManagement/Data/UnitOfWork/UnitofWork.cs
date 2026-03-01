@@ -1,4 +1,5 @@
-﻿using HospitalManagement.Repository;
+﻿using HospitalManagement.Data;
+using HospitalManagement.Repository;
 using HospitalManagement.Repository.Interface;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -9,9 +10,9 @@ namespace HospitalManagement.Data.UnitOfWork
         private readonly AppDbContext _context;
         private IDbContextTransaction _transaction;
 
+        private IPatientRepository _patientRepository;
         private IDepartmentRepository _departmentRepository;
         private IDoctorRepository _doctorRepository;
-        private IPatientRepository _patientRepository;
         private IAppointmentRepository _appointmentRepository;
         private IUserRepository _userRepository;
         private IRoleRepository _roleRepository;
@@ -22,61 +23,26 @@ namespace HospitalManagement.Data.UnitOfWork
             _context = context;
         }
 
-        public IDepartmentRepository DepartmentRepository
-        {
-            get
-            {
-                return _departmentRepository ??= new DepartmentRepository(_context);
-            }
-        }
+        public IPatientRepository PatientRepository =>
+            _patientRepository ??= new PatientRepository(_context);
 
-        public IDoctorRepository DoctorRepository
-        {
-            get
-            {
-                return _doctorRepository ??= new DoctorRepository(_context);
-            }
-        }
+        public IDepartmentRepository DepartmentRepository =>
+            _departmentRepository ??= new DepartmentRepository(_context);
 
-        public IPatientRepository PatientRepository
-        {
-            get
-            {
-                return _patientRepository ??= new PatientRepository(_context);
-            }
-        }
+        public IDoctorRepository DoctorRepository =>
+            _doctorRepository ??= new DoctorRepository(_context);
 
-        public IAppointmentRepository AppointmentRepository
-        {
-            get
-            {
-                return _appointmentRepository ??= new AppointmentRepository(_context);
-            }
-        }
+        public IAppointmentRepository AppointmentRepository =>
+            _appointmentRepository ??= new AppointmentRepository(_context);
 
-        public IUserRepository UserRepository
-        {
-            get
-            {
-                return _userRepository ??= new UserRepository(_context);
-            }
-        }
+        public IUserRepository UserRepository =>
+            _userRepository ??= new UserRepository(_context);
 
-        public IRoleRepository RoleRepository
-        {
-            get
-            {
-                return _roleRepository ??= new RoleRepository(_context);
-            }
-        }
+        public IRoleRepository RoleRepository =>
+            _roleRepository ??= new RoleRepository(_context);
 
-        public ILeaveRepository LeaveRepository
-        {
-            get
-            {
-                return _leaveRepository ??= new LeaveManagementRepository(_context);
-            }
-        }
+        public ILeaveRepository LeaveRepository =>
+            _leaveRepository ??= new LeaveManagementRepository(_context);
 
         public async Task<int> SaveChangesAsync()
         {
@@ -93,7 +59,10 @@ namespace HospitalManagement.Data.UnitOfWork
             try
             {
                 await SaveChangesAsync();
-                await _transaction?.CommitAsync();
+                if (_transaction != null)
+                {
+                    await _transaction.CommitAsync();
+                }
             }
             catch
             {
@@ -114,7 +83,10 @@ namespace HospitalManagement.Data.UnitOfWork
         {
             try
             {
-                await _transaction?.RollbackAsync();
+                if (_transaction != null)
+                {
+                    await _transaction.RollbackAsync();
+                }
             }
             finally
             {
@@ -128,6 +100,8 @@ namespace HospitalManagement.Data.UnitOfWork
 
         public void Dispose()
         {
+            _transaction?.Dispose();
+            _context?.Dispose();
         }
     }
 }

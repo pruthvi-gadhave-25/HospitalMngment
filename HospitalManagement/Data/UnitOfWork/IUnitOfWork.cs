@@ -1,4 +1,5 @@
 ﻿using HospitalManagement.Repository.Interface;
+using System.Threading.Tasks;
 
 namespace HospitalManagement.Data.UnitOfWork
 {
@@ -11,6 +12,10 @@ namespace HospitalManagement.Data.UnitOfWork
         IUserRepository UserRepository { get; }
         IRoleRepository RoleRepository { get; }
         ILeaveRepository LeaveRepository { get; }
-     
+
+        Task<int> SaveChangesAsync();
+        Task BeginTransactionAsync();
+        Task CommitAsync();
+        Task RollbackAsync();
     }
 }

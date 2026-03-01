@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
-
-
+import Register from "./components/Register";
 import Home from "./components/Home";
 import Login from "./components/Login";
-import Register from "./components/Register";
-import { BrowserRouter ,Routes,Route } from "react-router-dom";
+import {Routes,Route, Navigate } from "react-router-dom";
+import Navbar from "./components/Navbar";
 
 export default function App() {
   const [token, setToken] = useState(null);
-const [page, setPage] = useState("login");
+  const [page, setPage] = useState("login");
 
 
 // restore token on refresh
@@ -35,34 +34,30 @@ setToken(null);
 setPage("login");
 };
 
+
+
+
+  useEffect(() => {
   if (!token && page === "home") {
-    setPage("login"); // hard guard
+    setPage("login");
   }
+  
+}, [token, page]);
 
   return (
     <>  
-   <BrowserRouter>
-    <Routes>
-        <Route path="/" element={<Home />} />
-        {/* <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} /> */}
-    </Routes>
-  </BrowserRouter>
-      {/* {page === "login" && (
-        <Login
-          goRegister={() => setPage("register")}
-          onSuccess={handleAuthSuccess}
-        />
-      )}
+    <div>
+       <Navbar/>
+       <Routes>
+        <Route path="/" element={ <Navigate to ="/Register"/>} />
 
-      {page === "register" && (
-        <Register
-          goLogin={() => setPage("login")}
-          onSuccess={handleAuthSuccess}
-        />
-      )}
-
-      {page === "home" && <Home token={token} onLogout={logout} />} */}
-    </>
+        <Route path="/home" element={<Home/>}/>
+        <Route path="/login" element={<Login/ >}/>
+        <Route path="/register" element={<Register/>}/>
+       </Routes>
+ 
+      </div> 
+      </>
   );
 }
+

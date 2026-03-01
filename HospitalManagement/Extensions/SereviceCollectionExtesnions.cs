@@ -13,8 +13,11 @@ namespace HospitalManagement.Extensions
     {
         public static IServiceCollection AddApplicationServices(this IServiceCollection  services)
         {
-            services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
+            // Unit of Work registration
             services.AddScoped<IUnitOfWork, UnitofWork>();
+            
+            services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
+            
             //repository  
             services.AddScoped<PatientRepository>();
             services.AddScoped<DepartmentRepository>();
@@ -23,6 +26,7 @@ namespace HospitalManagement.Extensions
             services.AddScoped<UserRepository>();
             services.AddScoped<LeaveManagementRepository>();
             services.AddScoped<IRoleRepository, RoleRepository>();
+            
             // Services
             services.AddScoped<IPatientService, PatientService>();
             services.AddScoped<IDepartmentService, DepartmentService>();
