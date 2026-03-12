@@ -46,7 +46,7 @@ namespace HospitalManagement.Services
                 await _unitOfWork.SaveChangesAsync();
 
                 // invalidate cache
-                _cache.Remove("Patientslist");
+                InvalidatePatientCache();
 
                 return true;
             }
@@ -180,7 +180,7 @@ namespace HospitalManagement.Services
                 await _unitOfWork.SaveChangesAsync();
 
                 // invalidate cache
-                _cache.Remove("Patientslist");
+                InvalidatePatientCache();
 
                 return Result<bool>.SuccessResult(true, "Patient updated successfully");
             }
@@ -189,6 +189,38 @@ namespace HospitalManagement.Services
                 _logger.LogError($"Error occured {ex.Message}");
                 return Result<bool>.ErrorResult("Failed to update patient");
             }
+        }
+
+        public async Task<Result<bool>> DeletePatientAsync(int id)
+        {
+            try
+            {
+                if (id <= 0)
+                    return Result<bool>.ErrorResult("Invalid patient ID");
+
+                var existing = await _unitOfWork.PatientRepository.GetById(id);
+                if (existing == null)
+                    return Result<bool>.ErrorResult("Patient not found");
+
+                await _unitOfWork.PatientRepository.Delete(existing);
+                await _unitOfWork.SaveChangesAsync();
+
+                // invalidate cache
+                InvalidatePatientCache();
+
+                _logger.LogInformation($"Patient with ID {id} deleted successfully");
+                return Result<bool>.SuccessResult(true, "Patient deleted successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error occurred while deleting patient: {ex.Message}");
+                return Result<bool>.ErrorResult("Failed to delete patient");
+            }
+        }
+
+        private void InvalidatePatientCache()
+        {
+            _cache.Remove("Patientslist");
         }
     }
 }

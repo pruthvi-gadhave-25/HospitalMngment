@@ -121,5 +121,24 @@ namespace HospitalManagement.Controllers
                 return StatusCode(500, "Error occurred while updating patient");
             }
         }
+
+        [HttpDelete("delete/patient/{id}")]
+        public async Task<IActionResult> DeletePatientAsync(int id)
+        {
+            try
+            {
+                var res = await _patientService.DeletePatientAsync(id);
+                if (!res.IsSuccess)
+                {
+                    return BadRequest(res);
+                }
+
+                return Ok(res);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error occurred while deleting patient");
+            }
+        }
     }
 }
