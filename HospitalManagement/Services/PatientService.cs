@@ -12,11 +12,11 @@ namespace HospitalManagement.Services
     public class PatientService : IPatientService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ILogger<LoggingActionFilter> _logger;
+        private readonly ILogger<PatientService> _logger; 
         private readonly IMapper _mapper;
         private readonly IMemoryCache _cache;
 
-        public PatientService(IUnitOfWork unitOfWork, ILogger<LoggingActionFilter> logger, IMapper mapper, IMemoryCache memoryCache)
+        public PatientService(IUnitOfWork unitOfWork, ILogger<PatientService> logger, IMapper mapper, IMemoryCache memoryCache)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
@@ -44,6 +44,10 @@ namespace HospitalManagement.Services
 
                 await _unitOfWork.PatientRepository.Add(patient);
                 await _unitOfWork.SaveChangesAsync();
+
+                // invalidate cache
+                _cache.Remove("Patientslist");
+
                 return true;
             }
             catch (Exception ex)
@@ -84,38 +88,59 @@ namespace HospitalManagement.Services
             return Result<GetPatientDto>.SuccessResult(patient, "patient fetched succsfully");
         }
 
-        public async Task<Result<List<GetPatientDto>>> GetPatientsAsync()
+        public async Task<Result<PagedResult<GetPatientDto>>> GetPatientsAsync(int pageIndex = 1, int pageSize = 10)
         {
             try
             {
-                string cacheKey = "Patientslist";
+                //string cacheKey = $"Patientslist_page_{pageIndex}_size_{pageSize}";
 
-                if (_cache.TryGetValue(cacheKey, out List<GetPatientDto> cachedPatients))
+                //if (_cache.TryGetValue(cacheKey, out PagedResult<GetPatientDto> cachedPatients))
+                //{
+                //    return Result<PagedResult<GetPatientDto>>
+                //        .SuccessResult(cachedPatients, "patients fetched from cache");
+                //}
+
+                var allPatients = await _unitOfWork.PatientRepository.GetPatientsAsync();
+
+                if (allPatients == null || !allPatients.Any())
                 {
-                    return Result<List<GetPatientDto>>.SuccessResult(cachedPatients, "fethced succefully");
+                    return Result<PagedResult<GetPatientDto>>
+                        .ErrorResult("No patients found");
                 }
 
-                var res = await _unitOfWork.PatientRepository.GetPatientsAsync();
+                int totalCount = allPatients.Count;
+                int skip = (pageIndex - 1) * pageSize;
 
-                if (res == null || !res.Any())
+                var paginatedPatients = allPatients
+                    .Skip(skip)
+                    .Take(pageSize)
+                    .ToList();
+
+                var patientsDto = _mapper.Map<List<GetPatientDto>>(paginatedPatients);
+
+                var pagedResult = new PagedResult<GetPatientDto>
                 {
-                    return Result<List<GetPatientDto>>.ErrorResult("No patients found");
-                }
-
-                var patientsDto = _mapper.Map<List<GetPatientDto>>(res);
+                    PageIndex = pageIndex,
+                    PageSize = pageSize,
+                    TotalCount = totalCount,
+                    Data = patientsDto
+                };
 
                 var options = new MemoryCacheEntryOptions()
                     .SetSlidingExpiration(TimeSpan.FromMinutes(5))
                     .SetAbsoluteExpiration(TimeSpan.FromMinutes(30));
 
-                _cache.Set(cacheKey, patientsDto, options);
+                //_cache.Set(cacheKey, pagedResult, options);
 
-                return Result<List<GetPatientDto>>.SuccessResult(patientsDto, "patients fetched succefully");
+                return Result<PagedResult<GetPatientDto>>
+                    .SuccessResult(pagedResult, "patients fetched successfully");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error Occured {ex.Message}");
-                return Result<List<GetPatientDto>>.ErrorResult("No patients found");
+                _logger.LogError($"Error occurred: {ex.Message}");
+
+                return Result<PagedResult<GetPatientDto>>
+                    .ErrorResult("Error fetching patients");
             }
         }
 
@@ -131,6 +156,38 @@ namespace HospitalManagement.Services
             {
                 _logger.LogError($"Error occured {ex.Message}");
                 return Result<List<Patient>>.ErrorResult("No patients found");
+            }
+        }
+
+        public async Task<Result<bool>> UpdatePatientAsync(UpdatePatientDto updateDto)
+        {
+            try
+            {
+                if (updateDto == null)
+                    return Result<bool>.ErrorResult("Invalid data");
+
+                var existing = await _unitOfWork.PatientRepository.GetById(updateDto.Id);
+                if (existing == null)
+                    return Result<bool>.ErrorResult("Patient not found");
+
+                existing.Name = updateDto.Name;
+                existing.Email = updateDto.Email;
+                existing.Mobile = updateDto.Mobile;
+                existing.Gender = updateDto.Gender;
+                existing.Dob = updateDto.Dob;
+
+                await _unitOfWork.PatientRepository.Update(existing);
+                await _unitOfWork.SaveChangesAsync();
+
+                // invalidate cache
+                _cache.Remove("Patientslist");
+
+                return Result<bool>.SuccessResult(true, "Patient updated successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error occured {ex.Message}");
+                return Result<bool>.ErrorResult("Failed to update patient");
             }
         }
     }

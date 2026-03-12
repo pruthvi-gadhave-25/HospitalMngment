@@ -1,11 +1,16 @@
 import { useState } from "react"
 import { Navigate, useNavigate } from "react-router-dom";
+import { register } from "../services/userService";
 
 function Register() {
-  const  navigate =  useNavigate();
+  const navigate = useNavigate();
+
+  
   const [formData, setFormData] = useState({
-    username: "",
-    password: ""
+    userName: "",
+    email: "",
+    password: "",
+    role: "Admin"
   });
 
 
@@ -27,9 +32,10 @@ function Register() {
       return;
     }
     else {
+      register(formData)
       navigate("/login");
     }
-    
+
     console.log("User Registered:", formData);
     // TODO: send data to backend API
     // fetch("https://your-api/register", { method: "POST", body: JSON.stringify(formData) })
@@ -53,6 +59,17 @@ function Register() {
         </div>
 
         <div style={{ marginBottom: "10px" }}>
+          <label>Email</label>
+          <input
+            type="text"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            style={{ width: "100%", padding: "8px" }}
+          />
+        </div>
+
+        <div style={{ marginBottom: "10px" }}>
           <label>Password</label>
           <input
             type="password"
@@ -62,6 +79,8 @@ function Register() {
             style={{ width: "100%", padding: "8px" }}
           />
         </div>
+       
+
         <button type="submit" onSubmit={handleSubmit}>Register</button>
 
       </form>

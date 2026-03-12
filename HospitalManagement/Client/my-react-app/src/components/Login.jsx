@@ -1,14 +1,20 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useActionData, useNavigate } from "react-router-dom";
+import { login } from "../services/userService";
 
-export default function Login({  onSuccess }) {
+export default function Login({ onSuccess }) {
 
   const navigate = useNavigate();
 
-
+  const [formData ,setFormData]  = useState({
+    email :"",
+    password : "" 
+  })  ;
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const[loading ,setLoading] = useState(false);
 
 
   // const handleLogin = async () => {
@@ -16,6 +22,16 @@ export default function Login({  onSuccess }) {
   //     alert("Email and password required");
   //     return;
   //   }
+
+  const handleChange = (e) => {
+    console.log(e.target.value);
+    
+   setFormData( {
+     ...formData , 
+     [e.target.name] : e.target.value
+   }) ;
+
+  }
 
   const handleLogin = async () => {
     navigate("/");
@@ -28,59 +44,59 @@ export default function Login({  onSuccess }) {
     setError("");
 
     try {
-      const res = await login(formData);
-
-      // Store token
-      localStorage.setItem("token", res.data.token);
-
-      // Redirect after login
-      navigate("/dashboard");
-
+      const res = await  login(formData);
+      debugger;
+      if (res.data.success) {
+        // Store token  
+        localStorage.setItem("token", res.data.token);
+        // Redirect after login
+        navigate("/dashboard");
+      } else {
+        setError(err.message || "Something went wrong" + res.messgae);
+      }
     } catch (err) {
+      console.log(err);
+      
       setError(err.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
-  // onSuccess(data.token);
-  // if (!res.ok) {
-  //   alert("Login failed");
-  //   return;
-  // }
+  const goRegister = () => {
+    navigate("/register")
+  }
 
-const  goRegister = () => {
-  navigate("/register")
-}
-
-return (
-  <div>
-    <h2>Login</h2>
+  return (
+    <div>
+      <h2>Login</h2>
 
 
-    {/* EMAIL INPUT */}
-    {/* <input
-      type="email"
-      placeholder="Email"
-      value={email}
-      onChange={(e) => setEmail(e.target.value)}
-    /> */}
+      {/* EMAIL INPUT */}
+      <input
+        type="email"
+        placeholder="Email"
+        value={formData.email}
+        name ="email"
+        onChange={handleChange}
+      />
 
 
 
-    {/* PASSWORD INPUT */}
-    {/* <input
-      type="password"
-      placeholder="Password"
-      value={password}
-      onChange={(e) => setPassword(e.target.value)}
-    /> */}
+      {/* PASSWORD INPUT */}
+      <input
+        type="password"
+        placeholder="Password"
+        value={formData.password}
+        name="password"
+        onChange={handleChange}
+      />
 
-    <button onClick={handleLogin}>Login</button>
-    <p>
-      No account?
-      <button onClick={goRegister}>Register</button>
-    </p>
-  </div>
-);
+      <button type="submit" onClick={handleSubmit}>Login</button>
+      <p>
+        No account?
+        <button onClick={goRegister}>Register</button>
+      </p>
+    </div>
+  );
 }

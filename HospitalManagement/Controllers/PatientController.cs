@@ -2,7 +2,6 @@
 using HospitalManagement.Models;
 using HospitalManagement.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HospitalManagement.Controllers
@@ -19,28 +18,6 @@ namespace HospitalManagement.Controllers
         public PatientController(IPatientService patientService)
         {
             _patientService = patientService;
-        }
-
-        //[Authorize(Roles = "Doctor")]
-        [HttpGet("get/patients")]
-        public async Task<IActionResult> GetPatients()
-        {
-            try
-            {
-                var res = await _patientService.GetPatientsAsync();
-
-                if (res == null)
-                {
-                    return NotFound("No patients found.");
-                }
-
-                return Ok(res);
-            }
-            catch (Exception ex)
-            {   //logexception 
-                Console.WriteLine(ex);
-                return StatusCode(500, "An error occurred while get  patients.");
-            }
         }
 
         //[Authorize(Roles = "Doctor")]
@@ -89,6 +66,60 @@ namespace HospitalManagement.Controllers
         {
             var result = await _patientService.SearchPatientsAsync(name, email, mobile);
             return Ok(result);
+        }
+
+        [HttpGet("get/patients")]
+        public async Task<IActionResult> GetPatients([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                var res = await _patientService.GetPatientsAsync(pageIndex, pageSize);
+
+                if (res == null || !res.IsSuccess)
+                {
+                    return NotFound(res);
+                }
+
+                return Ok(new
+                {
+                    isSuccess = true,
+                    message = "patients fetched successfully",
+                    data = new
+                    {
+                        pageIndex = res.Data.PageIndex,
+                        pageSize = res.Data.PageSize,
+                        totalCount = res.Data.TotalCount,
+                        totalPages = res.Data.TotalPages,
+                        hasPreviousPage = res.Data.HasPreviousPage,
+                        hasNextPage = res.Data.HasNextPage,
+                        data = res.Data.Data
+                    }
+                });
+            }
+            catch (Exception ex)
+            {   //logexception 
+                Console.WriteLine(ex);
+                return StatusCode(500, "An error occurred while get  patients.");
+            }
+        }
+
+        [HttpPut("update/patient")]
+        public async Task<IActionResult> UpdatePatientAsync(UpdatePatientDto updateDto)
+        {
+            try
+            {
+                var res = await _patientService.UpdatePatientAsync(updateDto);
+                if (!res.IsSuccess)
+                {
+                    return BadRequest(res.Message);
+                }
+
+                return Ok(res);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error occurred while updating patient");
+            }
         }
     }
 }
