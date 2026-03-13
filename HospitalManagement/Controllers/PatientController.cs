@@ -62,18 +62,18 @@ namespace HospitalManagement.Controllers
 
         [Authorize(Roles = "Doctor")]
         [HttpGet("search/patient")]
-        public async Task<IActionResult> SearchPatients(string? name,  string? email = null, string? mobile =null)
+        public async Task<IActionResult> SearchPatients(string? name)
         {
-            var result = await _patientService.SearchPatientsAsync(name, email, mobile);
+            var result = await _patientService.SearchPatientsAsync(name);
             return Ok(result);
         }
 
         [HttpGet("get/patients")]
-        public async Task<IActionResult> GetPatients([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetPatients([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10 , string gender = null)
         {
             try
             {
-                var res = await _patientService.GetPatientsAsync(pageIndex, pageSize);
+                var res = await _patientService.GetPatientsAsync(pageIndex, pageSize,gender);
 
                 if (res == null || !res.IsSuccess)
                 {

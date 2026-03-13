@@ -52,23 +52,32 @@ namespace HospitalManagement.Repository
             }
         }
 
-        public async Task<List<Patient>> SearchPatientAsync(string name , string mobileNo , string email)
+        public async Task<List<Patient>> SearchPatientAsync(string name)
         {
             try{
+
                 var query = _appDbContext.Patients.AsQueryable();
-            
                 if (!string.IsNullOrWhiteSpace(name))
                 {
-                     query = query.Where(c => c.Name.Contains(name));
+                    query = query.Where(c =>
+                        c.Name.Contains(name) ||
+                        c.Email.Contains(name) ||
+                        c.Mobile.Contains(name)
+                    );
                 }
-                 if (!string.IsNullOrWhiteSpace(mobileNo))
-                {
-                    query = query.Where(c => c.Mobile.Contains(mobileNo));
-                }
-                if(!string.IsNullOrWhiteSpace(email))
-                {
-                    query = query.Where(c => c.Email.Contains(email));
-                }
+
+                //if (!string.IsNullOrWhiteSpace(name))
+                //{
+                //     query = query.Where(c => c.Name.Contains(name));
+                //}
+                // if (!string.IsNullOrWhiteSpace(mobileNo))
+                //{
+                //    query = query.Where(c => c.Mobile.Contains(mobileNo));
+                //}
+                //if(!string.IsNullOrWhiteSpace(email))
+                //{
+                //    query = query.Where(c => c.Email.Contains(email));
+                //}
 
                 return await query.ToListAsync();
             }catch(Exception ex)

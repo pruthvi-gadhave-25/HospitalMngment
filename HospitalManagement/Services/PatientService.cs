@@ -88,7 +88,7 @@ namespace HospitalManagement.Services
             return Result<GetPatientDto>.SuccessResult(patient, "patient fetched succsfully");
         }
 
-        public async Task<Result<PagedResult<GetPatientDto>>> GetPatientsAsync(int pageIndex = 1, int pageSize = 10)
+        public async Task<Result<PagedResult<GetPatientDto>>> GetPatientsAsync(int pageIndex = 1, int pageSize = 10 ,string gender =null)
         {
             try
             {
@@ -106,6 +106,11 @@ namespace HospitalManagement.Services
                 {
                     return Result<PagedResult<GetPatientDto>>
                         .ErrorResult("No patients found");
+                }
+                
+                if( !string.IsNullOrEmpty(gender))
+                {
+                        allPatients = allPatients.Where(g => g.Gender == gender).ToList();
                 }
 
                 int totalCount = allPatients.Count;
@@ -144,11 +149,11 @@ namespace HospitalManagement.Services
             }
         }
 
-        public async Task<Result<List<Patient>>> SearchPatientsAsync(string? name, string? email, string? mobileNo)
+        public async Task<Result<List<Patient>>> SearchPatientsAsync(string? name)
         {
             try
             {
-                var patients = await _unitOfWork.PatientRepository.SearchPatientAsync(name, mobileNo, email);
+                var patients = await _unitOfWork.PatientRepository.SearchPatientAsync(name);
 
                 return Result<List<Patient>>.SuccessResult(patients, "patient found succefully");
             }

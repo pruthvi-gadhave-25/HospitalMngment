@@ -7,6 +7,6 @@ namespace HospitalManagement.Repository.Interface
     {
         Task<Patient?> GetPatientByIdAsync(int id);
         Task<List<Patient>> GetPatientsAsync();
-        Task<List<Patient>> SearchPatientAsync(string? name, string? mobileNo, string? email);
+        Task<List<Patient>> SearchPatientAsync(string? name);
     }
 }
