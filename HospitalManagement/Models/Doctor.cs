@@ -20,9 +20,7 @@ namespace HospitalManagement.Models
         public string ContactDetails { get; set; }
 
         [Required(ErrorMessage = "Department ID is required.")]
-        public int DepartmentId { get; set; }
-
-        //public string  Address { get; set; } = string.Empty;
+        public int DepartmentId { get; set; }        
     
         public virtual  Department? Department { get; set; } //foreign
 

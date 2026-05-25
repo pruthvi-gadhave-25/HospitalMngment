@@ -222,7 +222,7 @@ namespace HospitalManagement.Repository
             try
             {                   
                  var appointments =await   _appDbContext.Appointments
-                    .Where(p => p.PatientID == patientId && p.Status == Helpers.AppointmentStatus.Completed )                   
+                    .Where(p => p.PatientId == patientId && p.Status == Helpers.AppointmentStatus.Completed )                   
                     .AsNoTracking()
                     .ToListAsync();
 

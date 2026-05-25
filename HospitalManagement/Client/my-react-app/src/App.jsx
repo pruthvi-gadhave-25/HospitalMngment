@@ -23,8 +23,7 @@ export default function App() {
 
     if (savedToken) {
       setToken(savedToken);
-      navigate("/dashboard");
-      //setUser()
+      navigate("/dashboard");    
     }
   }, []);
 

@@ -75,7 +75,7 @@ namespace HospitalManagement.Services
 
             var appointment = new Appointment
             {
-                PatientID = appointmentDto.PatientID,
+                PatientId = appointmentDto.PatientID,
                 DoctorId = appointmentDto.DoctorId,
                 AppointmentDate = appointmentDto.AppointmentDate,
                 AppointmentTime = appointmentDto.AppointmentTime,

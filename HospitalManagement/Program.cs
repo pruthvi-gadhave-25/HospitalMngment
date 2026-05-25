@@ -1,5 +1,6 @@
 using AutoMapper;
 using HospitalManagement.Data;
+using HospitalManagement.Data.UnitOfWork;
 using HospitalManagement.Extensions;
 using HospitalManagement.Helpers;
 using HospitalManagement.Helpers.Interface;
@@ -26,10 +27,9 @@ var builder = WebApplication.CreateBuilder(args);
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .WriteTo.Console()
-    .WriteTo.File("Logs/hopitalmanagementLogs.txt")
+    .WriteTo.File("Logs/hospitalmanagementLogs.txt")
     .CreateLogger();
 
-//builder.Host.UseSerilog();
 // Add services to the container.
 
 //CORS 
@@ -38,7 +38,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("FrontendPolicy", policy =>
     {
         policy
-        .WithOrigins("http://localhost:5128","http://localhost:5173")
+        .WithOrigins("http://localhost:5128", "http://localhost:5173")
         .AllowAnyHeader()
         .AllowAnyMethod();
     });
@@ -55,20 +55,14 @@ builder.Services.AddMemoryCache();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
 
-string connetionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connetionString));
+builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
 
-
-builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings")); ;
-//builder.Services.AddTransient<IEmailService, EmailSendService>();
-
-//builder.Services.AddScoped<IDepartmentService, DepartmentService>();
-//builder.Services.AddScoped<DepartmentRepository>();
-
-builder.Services.AddApplicationServices(); //all services added  here 
-builder.Services.AddInfrastructureServices(); // and here 
-
+// Register all application services and Unit of Work
+builder.Services.AddApplicationServices(); //all services added here
+builder.Services.AddInfrastructureServices(); //and here
 
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 
@@ -87,45 +81,49 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSettings["Key"])),
             RoleClaimType = ClaimTypes.Role
         };
-
     });
 
-
+// Configure Swagger with JWT support
 builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
     {
-        c.SwaggerDoc("v1", new OpenApiInfo
+        Title = "Hospital Management API",
+        Version = "v1"
+    });
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer 1safsfsdfdfd\"",
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
         {
-            Title = "JWTToken_Auth_API",
-            Version = "v1"
-        });
-        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
-        {
-            Name = "Authorization",
-            Type = SecuritySchemeType.ApiKey,
-            Scheme = "Bearer",
-            BearerFormat = "JWT",
-            In = ParameterLocation.Header,
-            Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer 1safsfsdfdfd\"",
-        });
-        c.AddSecurityRequirement(new OpenApiSecurityRequirement {
-        {
-            new OpenApiSecurityScheme {
-                Reference = new OpenApiReference {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
                     Type = ReferenceType.SecurityScheme,
-                        Id = "Bearer"
+                    Id = "Bearer"
                 }
             },
-            new string[] {}
+            new string[] { }
         }
     });
-    });
+});
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-
-app.UseSwagger();
-app.UseSwaggerUI();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseHttpsRedirection();
