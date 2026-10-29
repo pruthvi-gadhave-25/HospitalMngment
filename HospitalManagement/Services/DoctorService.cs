@@ -8,6 +8,7 @@ using HospitalManagement.Repository;
 using HospitalManagement.Repository.Interface;
 using HospitalManagement.Services.Interface;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Serilog;
 using System.Numerics;
 
@@ -19,17 +20,20 @@ namespace HospitalManagement.Services
         private readonly DepartmentRepository _departmentRepso; 
         private readonly ILogger<DoctorService> _logger;
 
-        private readonly DoctorRepository doctorRepository; 
+        private readonly DoctorRepository doctorRepository;
+        private readonly IMemoryCache _memoryCache; 
 
         public DoctorService(DoctorRepository doctorRepository , 
             ILogger<DoctorService> logger ,
             DepartmentRepository departmentRepository
+            ,IMemoryCache memoryCache
             )
 
         {
             _repository = doctorRepository;
             _logger = logger;
             _departmentRepso = departmentRepository;
+            _memoryCache = memoryCache;
         }
         public async Task<Result<Doctor>> AddDoctorAsync(AddDoctorDto doctorDto)
         {
@@ -60,7 +64,7 @@ namespace HospitalManagement.Services
             if (!isSaved)
                 return Result<Doctor>.ErrorResult("Failed to Add");
 
-
+            _memoryCache.Remove("doctors");
             _logger.LogInformation("Doctor added succefully");
             return Result<Doctor>.SuccessResult(doctor, "Doctor Added Succefully");
                                                           
@@ -75,7 +79,7 @@ namespace HospitalManagement.Services
             return Result<bool>.ErrorResult("invliad doctor Id ");
             }
             var res =  await _repository.DeleteDoctorAsync(id);
-
+            _memoryCache.Remove("doctors");
             _logger.LogInformation("deleted Succefully ");
             return Result<bool>.SuccessResult(res, "Deleted succefully");
            
@@ -83,6 +87,17 @@ namespace HospitalManagement.Services
 
         public async Task<Result<List<GetDoctorDto>>> GetDoctorsAsync()
         {
+
+            const  string cacheKey   = "doctors"; 
+
+            if(_memoryCache.TryGetValue(cacheKey, out List<GetDoctorDto>? cechedDoctors))
+            {
+                _logger.LogInformation("fetched dotors succefully in cache");
+
+                return Result<List<GetDoctorDto>>.SuccessResult(cechedDoctors, "Doctors fetched from cache");
+
+            }
+
               var doctors  = await _repository.GetAllDocotorsAsync();
                 if (doctors == null)
                 {
@@ -102,6 +117,7 @@ namespace HospitalManagement.Services
                         StartTime = slot.StartTime,
                     }).ToList() ?? new()
                 }).ToList();
+            _memoryCache.Set(cacheKey, doctorDtos, TimeSpan.FromMinutes(5));
 
             _logger.LogInformation("doctor fetched succefully");
                 return  Result<List<GetDoctorDto>>.SuccessResult(doctorDtos ,"doctors fecthed successfully"); ;
@@ -155,7 +171,7 @@ namespace HospitalManagement.Services
                     existingDoctor.ContactDetails =doctorDto.ContactDetails;             
 
                var res =  await _repository.UpdateDoctorAsync(existingDoctor);
-
+            _memoryCache.Remove("doctors");
             _logger.LogInformation("Updated Doctor ");
             return Result<bool>.SuccessResult(res, "Updated Succesfully");
 

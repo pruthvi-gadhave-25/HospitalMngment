@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import Register from "./components/Register";
-import Dashboard from "./components/Dashboard";
-import Login from "./components/Login";
+import Register from "./components/pages/Register";
+import Dashboard from "./components/pages/Dashboard";
+import Login from "./components/pages/Login";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import Navbar from "./components/Navbar";
 import AuthRedirect from "./components/AuthRedirect";
 import PrivateRoute from "./components/PrivateRoute";
 import PublicRoute from "./components/PublicRoute";
@@ -34,7 +33,7 @@ export default function App() {
 
         <Routes>
           <Route path="/" element={<AuthRedirect />} />
-          {/* <Route path="/" element={<Navigate to="/Register" />} /> */}
+           <Route path="/" element={<Navigate to="/Register" />} /> 
           <Route path="login" element={
             <PublicRoute>
               <Login />
