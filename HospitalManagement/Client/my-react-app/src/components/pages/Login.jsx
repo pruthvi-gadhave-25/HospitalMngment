@@ -1,102 +1,95 @@
 import { useState } from "react";
-import { useActionData, useNavigate } from "react-router-dom";
-import { login } from "../services/userService";
+import { useNavigate } from "react-router-dom";
+import { login } from "../../services/userService";
 
-export default function Login({ onSuccess }) {
-
+export default function Login() {
   const navigate = useNavigate();
-
-  const [formData ,setFormData]  = useState({
-    email :"",
-    password : "" 
-  })  ;
-  
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState({
+    email: "",
+    password: ""
+  });
   const [error, setError] = useState("");
-  const[loading ,setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
+  const handleChange = (event) => {
+    setFormData({
+      ...formData,
+      [event.target.name]: event.target.value
+    });
+  };
 
-  // const handleLogin = async () => {
-  //   if (!email || !password) {
-  //     alert("Email and password required");
-  //     return;
-  //   }
-
-  const handleChange = (e) => {
-    console.log(e.target.value);
-    
-   setFormData( {
-     ...formData , 
-     [e.target.name] : e.target.value
-   }) ;
-
-  }
-
-  const handleLogin = async () => {
-    navigate("/");
-    return;
-  }
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      const res = await  login(formData);
-      debugger;
-      if (res.data.success) {
-        // Store token  
-        localStorage.setItem("token", res.data.token);
-        // Redirect after login
-        navigate("/dashboard");
-      } else {
-        setError(err.message || "Something went wrong" + res.messgae);
+      const response = await login(formData);
+
+      if (!response.data.success) {
+        setError(response.data.message || "Login failed");
+        return;
       }
-    } catch (err) {
-      console.log(err);
-      
-      setError(err.response?.data?.message || "Login failed");
+
+      localStorage.setItem("token", response.data.token);
+      navigate("/dashboard");
+    } catch (requestError) {
+      const message = requestError.response?.data?.message;
+      const responseBody = requestError.response?.data;
+      setError(
+        (typeof message === "string" && message) ||
+          (typeof responseBody === "string" && responseBody) ||
+          "Login failed"
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const goRegister = () => {
-    navigate("/register")
-  }
-
   return (
-    <div>
-      <h2>Login</h2>
-
-
-      {/* EMAIL INPUT */}
-      <input
-        type="email"
-        placeholder="Email"
-        value={formData.email}
-        name ="email"
-        onChange={handleChange}
-      />
-
-
-
-      {/* PASSWORD INPUT */}
-      <input
-        type="password"
-        placeholder="Password"
-        value={formData.password}
-        name="password"
-        onChange={handleChange}
-      />
-
-      <button type="submit" onClick={handleSubmit}>Login</button>
-      <p>
-        No account?
-        <button onClick={goRegister}>Register</button>
-      </p>
-    </div>
+    <main className="auth-page">
+      <section className="auth-card" aria-labelledby="login-heading">
+        <h1 className="auth-heading" id="login-heading">Welcome back</h1>
+        <p className="auth-description">Sign in to your hospital account.</p>
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <div className="auth-field">
+            <label htmlFor="login-email">Email</label>
+            <input
+              id="login-email"
+              type="email"
+              name="email"
+              placeholder="you@example.com"
+              autoComplete="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="auth-field">
+            <label htmlFor="login-password">Password</label>
+            <input
+              id="login-password"
+              type="password"
+              name="password"
+              placeholder="Enter your password"
+              autoComplete="current-password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          {error && <p className="auth-error" role="alert">{error}</p>}
+          <button className="auth-submit" type="submit" disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
+          </button>
+        </form>
+        <p className="auth-switch">
+          No account?{" "}
+          <button type="button" onClick={() => navigate("/register")}>
+            Register
+          </button>
+        </p>
+      </section>
+    </main>
   );
 }

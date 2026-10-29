@@ -1,92 +1,102 @@
-import { useState } from "react"
-import { Navigate, useNavigate } from "react-router-dom";
-import { register } from "../services/userService";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { register } from "../../services/userService";
 
 function Register() {
   const navigate = useNavigate();
-
-  
   const [formData, setFormData] = useState({
     userName: "",
     email: "",
     password: "",
     role: "Admin"
   });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-
-
-  const handleChange = (e) => {
-    console.log(e.target.value);
-
+  const handleChange = (event) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
-    })
-  }
+      [event.target.name]: event.target.value
+    });
+  };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
 
-    if (!formData.username || !formData.password) {
-      alert("All fields are required");
-      return;
-    }
-    else {
-      register(formData)
+    try {
+      const response = await register(formData);
+
+      if (!response.data.success) {
+        setError(response.data.message || "Registration failed");
+        return;
+      }
+
       navigate("/login");
+    } catch (requestError) {
+      const message = requestError.response?.data?.message;
+      const responseBody = requestError.response?.data;
+      setError(
+        (typeof message === "string" && message) ||
+          (typeof responseBody === "string" && responseBody) ||
+          "Registration failed"
+      );
+    } finally {
+      setLoading(false);
     }
-
-    console.log("User Registered:", formData);
-    // TODO: send data to backend API
-    // fetch("https://your-api/register", { method: "POST", body: JSON.stringify(formData) })
-
-  }
+  };
 
   return (
-
-    <>
-      <form onSubmit={handleSubmit}>
-
-        <div style={{ marginBottom: "10px" }}>
-          <label>Username</label>
-          <input
-            type="text"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "8px" }}
-          />
-        </div>
-
-        <div style={{ marginBottom: "10px" }}>
-          <label>Email</label>
-          <input
-            type="text"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "8px" }}
-          />
-        </div>
-
-        <div style={{ marginBottom: "10px" }}>
-          <label>Password</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "8px" }}
-          />
-        </div>
-       
-
-        <button type="submit" onSubmit={handleSubmit}>Register</button>
-
-      </form>
-
-    </>
-  )
+    <main className="auth-page">
+      <section className="auth-card" aria-labelledby="register-heading">
+        <h1 className="auth-heading" id="register-heading">Create your account</h1>
+        <p className="auth-description">Register to access the hospital management system.</p>
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <div className="auth-field">
+            <label htmlFor="register-userName">Username</label>
+            <input
+              id="register-userName"
+              type="text"
+              name="userName"
+              value={formData.userName}
+              onChange={handleChange}
+              autoComplete="username"
+              required
+            />
+          </div>
+          <div className="auth-field">
+            <label htmlFor="register-email">Email</label>
+            <input
+              id="register-email"
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              autoComplete="email"
+              required
+            />
+          </div>
+          <div className="auth-field">
+            <label htmlFor="register-password">Password</label>
+            <input
+              id="register-password"
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              autoComplete="new-password"
+              required
+            />
+          </div>
+          {error && <p className="auth-error" role="alert">{error}</p>}
+          <button className="auth-submit" type="submit" disabled={loading}>
+            {loading ? "Registering..." : "Register"}
+          </button>
+        </form>
+      </section>
+    </main>
+  );
 }
 
 export default Register;
