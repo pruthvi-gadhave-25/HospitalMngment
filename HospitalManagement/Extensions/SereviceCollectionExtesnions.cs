@@ -38,6 +38,8 @@ namespace HospitalManagement.Extensions
 
             services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>(); //need manual injection  
             // no need to inject ilogger manyally  
+            services.AddScoped<IOtpRepository, OtpRepository>();
+            services.AddScoped<IOtpService, OtpService>();
             return services; 
         }
 

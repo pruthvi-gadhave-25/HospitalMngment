@@ -47,7 +47,7 @@ namespace HospitalManagement.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("PatientID")
+                    b.Property<int>("PatientId")
                         .HasColumnType("int");
 
                     b.Property<int>("Status")
@@ -61,7 +61,7 @@ namespace HospitalManagement.Migrations
 
                     b.HasIndex("DoctorId");
 
-                    b.HasIndex("PatientID");
+                    b.HasIndex("PatientId");
 
                     b.ToTable("Appointments");
                 });
@@ -272,6 +272,42 @@ namespace HospitalManagement.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("HospitalManagement.Models.UserOtp", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiryTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FailedAttempts")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("OtpHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UserOtps");
+                });
+
             modelBuilder.Entity("HospitalManagement.Models.Appointment", b =>
                 {
                     b.HasOne("HospitalManagement.Models.Doctor", "Doctor")
@@ -282,7 +318,7 @@ namespace HospitalManagement.Migrations
 
                     b.HasOne("HospitalManagement.Models.Patient", "Patient")
                         .WithMany("Appointments")
-                        .HasForeignKey("PatientID")
+                        .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
